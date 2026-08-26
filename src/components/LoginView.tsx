@@ -2,24 +2,54 @@ import React, { useState } from 'react';
 import { ScreenType } from '../types';
 
 interface LoginViewProps {
-  onLoginSuccess: (email: string) => void;
+  onLoginSuccess: (email: string, token: string) => void;
   onNavigate: (screen: ScreenType) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate }) => {
   const [email, setEmail] = useState('monikacherukuri667@gmail.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isRegister, setIsRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      if (isRegister) {
+        // Register first
+        const regRes = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const regData = await regRes.json();
+        if (!regRes.ok) {
+          throw new Error(regData.error || 'Registration failed');
+        }
+      }
+
+      // Log in to get token
+      const logRes = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const logData = await logRes.json();
+      if (!logRes.ok) {
+        throw new Error(logData.error || 'Login failed');
+      }
+
+      onLoginSuccess(email, logData.token);
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed');
+    } finally {
       setIsLoading(false);
-      onLoginSuccess(email);
-    }, 600);
+    }
   };
 
   return (
@@ -48,6 +78,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           </div>
 
           {/* Login Form */}
+          {error && (
+            <div className="mb-4 p-3.5 bg-[#FFDAD3] text-[#7C2E1D] text-[13.5px] font-semibold rounded-xl border border-[#FFB4A4] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              <span>{error}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
@@ -87,7 +124,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   className="block w-full pl-11 pr-3 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#176B5B] focus:border-[#176B5B] transition-all text-[15px] font-['Manrope'] placeholder-[#6F7975]"
                 />
               </div>
@@ -137,7 +174,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNavigate
           {/* Quick Demo Bypass */}
           <div className="mt-4 flex gap-2">
             <button
-              onClick={() => onLoginSuccess('monikacherukuri667@gmail.com')}
+              onClick={() => onLoginSuccess('monikacherukuri667@gmail.com', btoa('monikacherukuri667@gmail.com'))}
               className="flex-1 text-center py-2 px-3 border border-[#BEC9C4] rounded-lg text-[12px] font-semibold font-['Inter'] text-[#3F4945] hover:bg-[#EFEEE9] transition-colors"
             >
               Demo: Enter as Monika

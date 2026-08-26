@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenType, UserProfile, ProjectData, HealthCategory, CriticalIssue } from './types';
 import {
   initialProfile,
@@ -25,7 +25,23 @@ import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isValidatingSession, setIsValidatingSession] = useState<boolean>(true);
+
+  const changeScreen = (screen: ScreenType) => {
+    if (screen === 'login') {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      setCurrentScreen('login');
+      return;
+    }
+    if (!localStorage.getItem('token') && screen !== 'onboarding') {
+      setCurrentScreen('login');
+      return;
+    }
+    setCurrentScreen(screen);
+  };
   const [profile, setProfile] = useState<UserProfile>(initialProfile);
   const [project, setProject] = useState<ProjectData>(currentProject);
   const [categories, setCategories] = useState<HealthCategory[]>(defaultHealthCategories);
@@ -35,20 +51,133 @@ export default function App() {
   const [notificationCount, setNotificationCount] = useState(3);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
 
-  // When user is in Login mode, show the full-page split login view
-  if (currentScreen === 'login') {
+  // Check session validity on startup/refresh
+  useEffect(() => {
+    async function checkSession() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsAuthenticated(false);
+        setIsValidatingSession(false);
+        setCurrentScreen('login');
+        return;
+      }
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile) {
+            setProfile(data.profile);
+          }
+          if (data.project) {
+            setProject(data.project);
+          }
+          
+          // Also fetch the full profile analytics info to populate the categories
+          const profileRes = await fetch('/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            if (profileData.latestAnalysis) {
+              setCategories(profileData.latestAnalysis.categories);
+              setCriticalIssues(profileData.latestAnalysis.criticalIssues);
+            }
+          }
+
+          setIsAuthenticated(true);
+          setCurrentScreen('dashboard');
+        } else {
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setCurrentScreen('login');
+        }
+      } catch (err) {
+        console.error('Session validation failed:', err);
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+        setCurrentScreen('login');
+      } finally {
+        setIsValidatingSession(false);
+      }
+    }
+    checkSession();
+  }, []);
+
+  const handleUpdateProfile = async (updated: Partial<UserProfile>) => {
+    try {
+      setProfile((prev) => ({ ...prev, ...updated }));
+      
+      const token = localStorage.getItem('token');
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(updated),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(data.profile);
+        if (data.project) {
+          setProject(data.project);
+        }
+      }
+    } catch (err) {
+      console.error('Error saving profile changes:', err);
+    }
+  };
+
+  // If we are currently validating a session on reload, display a premium loading state matching the theme
+  if (isValidatingSession) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F4] flex flex-col items-center justify-center font-['Manrope']">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-[#005144]/20 border-t-[#005144] animate-spin"></div>
+          <p className="text-[14px] font-bold text-[#005144]">Verifying secure session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Route guard: if unauthenticated and not on onboarding, show the Login screen
+  const isGuestScreen = ['login', 'onboarding'].includes(currentScreen);
+  if (!isAuthenticated && !isGuestScreen) {
+    localStorage.removeItem('token');
     return (
       <LoginView
-        onLoginSuccess={(email) => {
-          setProfile((prev) => ({ ...prev, email }));
+        onLoginSuccess={(email, token) => {
+          localStorage.setItem('token', token);
+          setIsAuthenticated(true);
+          handleUpdateProfile({ email });
           setCurrentScreen('dashboard');
         }}
-        onNavigate={(screen) => setCurrentScreen(screen)}
+        onNavigate={changeScreen}
       />
     );
   }
 
-  // When user is in Onboarding flow without layout chrome
+  // Render Login screen (clears session to sign user out)
+  if (currentScreen === 'login') {
+    localStorage.removeItem('token');
+    return (
+      <LoginView
+        onLoginSuccess={(email, token) => {
+          localStorage.setItem('token', token);
+          setIsAuthenticated(true);
+          handleUpdateProfile({ email });
+          setCurrentScreen('dashboard');
+        }}
+        onNavigate={changeScreen}
+      />
+    );
+  }
+
+  // Render Onboarding flow
   if (currentScreen === 'onboarding') {
     return (
       <div className="min-h-screen bg-[#FAF9F4]">
@@ -60,7 +189,7 @@ export default function App() {
             <span className="font-['Manrope'] font-bold text-[20px] text-[#005144]">Projevo AI</span>
           </div>
           <button
-            onClick={() => setCurrentScreen('dashboard')}
+            onClick={() => changeScreen('dashboard')}
             className="text-[13px] font-bold font-['Inter'] text-[#53615D] hover:text-[#005144]"
           >
             Exit Setup
@@ -70,26 +199,53 @@ export default function App() {
         <OnboardingView
           profile={profile}
           onUpdateInterests={(interests) => {
-            setProfile((prev) => ({ ...prev, selectedInterests: interests }));
+            handleUpdateProfile({ selectedInterests: interests });
           }}
-          onComplete={() => setCurrentScreen('dashboard')}
-          onNavigate={(screen) => setCurrentScreen(screen)}
+          onComplete={() => changeScreen('dashboard')}
+          onNavigate={changeScreen}
         />
       </div>
     );
   }
 
-  const handleSelectNewProject = (title: string, stack: string[]) => {
-    setProject((prev) => ({
-      ...prev,
+  const handleSelectNewProject = async (title: string, stack: string[]) => {
+    const updatedProject = {
+      id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       title,
-      techStack: stack,
+      tagline: `Student project built with ${stack.join(', ')}`,
+      status: 'In Progress',
+      matchScore: 94,
+      healthScore: 92,
+      readinessScore: 40,
       stage: 'Planning & Initial Scaffolding',
       stageProgress: 20,
-      healthScore: 92,
-      matchScore: 94,
-      readinessScore: 40,
-    }));
+      techStack: stack,
+      issuesCount: 0
+    };
+
+    setProject(updatedProject);
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ project: updatedProject })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.project) {
+          setProject(data.project);
+        }
+      }
+    } catch (err) {
+      console.error('Error saving new project:', err);
+    }
   };
 
   const handleDiagnosticComplete = (data: {
@@ -99,7 +255,11 @@ export default function App() {
   }) => {
     setCategories(data.categories);
     setCriticalIssues(data.criticalIssues);
-    setProject((prev) => ({ ...prev, healthScore: data.overallHealth }));
+    setProject((prev) => ({ 
+      ...prev, 
+      healthScore: data.overallHealth,
+      issuesCount: data.criticalIssues.length
+    }));
   };
 
   return (
@@ -107,10 +267,10 @@ export default function App() {
       {/* Sidebar Navigation */}
       <Navigation
         currentScreen={currentScreen}
-        onNavigate={(screen) => setCurrentScreen(screen)}
-        onSelectScreen={(screen) => setCurrentScreen(screen)}
+        onNavigate={changeScreen}
+        onSelectScreen={changeScreen}
         profile={profile}
-        onOpenDoctor={() => setCurrentScreen('doctor')}
+        onOpenDoctor={() => changeScreen('doctor')}
         onOpenIdeaAnalyzer={() => setIsIdeaModalOpen(true)}
       />
 
@@ -140,7 +300,7 @@ export default function App() {
 
             {/* Quick Switch to Doctor */}
             <button
-              onClick={() => setCurrentScreen('doctor')}
+              onClick={() => changeScreen('doctor')}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#F5F4EF] border border-[#BEC9C4]/50 rounded-lg text-[12px] font-bold font-['Inter'] text-[#005144] transition-colors"
             >
               <span className="material-symbols-outlined text-[16px]">medical_services</span>
@@ -178,7 +338,7 @@ export default function App() {
                   <div className="space-y-2.5 text-[12px]">
                     <div
                       onClick={() => {
-                        setCurrentScreen('health-report');
+                        changeScreen('health-report');
                         setShowNotificationPopup(false);
                       }}
                       className="p-2.5 bg-[#FFDAD3]/40 rounded-xl cursor-pointer hover:bg-[#FFDAD3]/60 transition-colors"
@@ -188,7 +348,7 @@ export default function App() {
                     </div>
                     <div
                       onClick={() => {
-                        setCurrentScreen('adaptive-support');
+                        changeScreen('adaptive-support');
                         setShowNotificationPopup(false);
                       }}
                       className="p-2.5 bg-[#D6E6E0]/40 rounded-xl cursor-pointer hover:bg-[#D6E6E0]/60 transition-colors"
@@ -203,7 +363,7 @@ export default function App() {
 
             {/* User Avatar Click to Profile */}
             <div
-              onClick={() => setCurrentScreen('profile')}
+              onClick={() => changeScreen('profile')}
               className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-white/80 transition-colors"
             >
               <img
@@ -221,7 +381,7 @@ export default function App() {
             <DashboardView
               profile={profile}
               project={project}
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
               onOpenIdeaAnalyzer={() => setIsIdeaModalOpen(true)}
             />
           )}
@@ -231,28 +391,28 @@ export default function App() {
               categories={categories}
               criticalIssues={criticalIssues}
               overallScore={project.healthScore}
-              onNavigate={(s) => setCurrentScreen(s)}
-              onOpenAdaptiveSupport={() => setCurrentScreen('adaptive-support')}
+              onNavigate={changeScreen}
+              onOpenAdaptiveSupport={() => changeScreen('adaptive-support')}
             />
           )}
 
           {currentScreen === 'adaptive-support' && (
             <AdaptiveSupportView
               metrics={metrics}
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
             />
           )}
 
           {currentScreen === 'doctor' && (
             <ProjectDoctorView
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
               onDiagnosticComplete={handleDiagnosticComplete}
             />
           )}
 
           {currentScreen === 'discovery' && (
             <ProjectDiscoveryView
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
               onSelectProject={handleSelectNewProject}
             />
           )}
@@ -260,7 +420,7 @@ export default function App() {
           {currentScreen === 'interview-prep' && (
             <InterviewPrepView
               projectTitle={project.title}
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
             />
           )}
 
@@ -268,7 +428,7 @@ export default function App() {
             <ProfileSettingsView
               profile={profile}
               onUpdateProfile={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
-              onNavigate={(s) => setCurrentScreen(s)}
+              onNavigate={changeScreen}
             />
           )}
         </main>

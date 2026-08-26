@@ -19,6 +19,8 @@ export interface UserProfile {
   email: string;
   skills: { name: string; level: number }[];
   selectedInterests: string[];
+  university?: string;
+  graduationYear?: string;
 }
 
 export interface ProjectData {
