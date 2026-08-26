@@ -1,0 +1,6 @@
+{
+  "name": "Projevo AI",
+  "description": "AI-powered engineering project accelerator, project health diagnostics, adaptive student learning platform, and interview preparation workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
