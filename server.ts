@@ -1827,7 +1827,17 @@ async function startServer() {
   });
 }
 
-if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+// Only start standalone HTTP server when executed directly as the main script
+const isDirectExecution = Boolean(
+  process.env.STANDALONE === 'true' ||
+  (process.argv[1] && (
+    process.argv[1].endsWith('server.ts') ||
+    process.argv[1].endsWith('server.cjs') ||
+    process.argv[1].endsWith('server.js')
+  ))
+);
+
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME && isDirectExecution) {
   startServer();
 }
 
