@@ -20,10 +20,16 @@ const PORT = 3000;
 app.use(cookieParser());
 app.use(express.json({ limit: '20mb' }));
 
-// Set up uploads directory for avatars
-const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Set up uploads directory for avatars (using os.tmpdir on serverless)
+const uploadsDir = (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(process.cwd(), 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {
+  // Graceful fallback for read-only filesystems
 }
 app.use('/uploads', express.static(uploadsDir));
 
