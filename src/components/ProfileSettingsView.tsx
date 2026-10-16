@@ -82,8 +82,11 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
     formData.append('avatar', file);
 
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include',
         body: formData
       });
       if (res.ok) {
@@ -101,8 +104,11 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
 
   const handleRemoveAvatar = async () => {
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar/reset', {
-        method: 'POST'
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();
@@ -121,9 +127,14 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
     const skillLevelNum = levelToPercentage(newSkillLevel);
 
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/profile/skills', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ name: newSkillName.trim(), level: skillLevelNum })
       });
       if (res.ok) {
@@ -148,8 +159,14 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
   const handleDeleteSkill = async (index: number) => {
     const skill = profile.skills[index];
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`/api/profile/skills/${encodeURIComponent(skill.name)}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers,
+        credentials: 'include'
       });
       if (res.ok) {
         const data = await res.json();

@@ -30,9 +30,14 @@ export const IdeaAnalyzerModal: React.FC<IdeaAnalyzerModalProps> = ({
     setIsAnalyzing(true);
 
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/analyze-idea', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({ idea: ideaText, domain, skills: ['Python', 'Machine Learning', 'Git'] })
       });
       if (res.ok) {

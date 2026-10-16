@@ -129,8 +129,11 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
       formData.append('stack', techStack);
       formData.append('description', description);
 
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/diagnose', {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include',
         body: formData,
       });
 

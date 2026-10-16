@@ -23,21 +23,40 @@ import { ProjectDiscoveryView } from './components/ProjectDiscoveryView';
 import { InterviewPrepView } from './components/InterviewPrepView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
+import { safeApiFetch } from './api';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isValidatingSession, setIsValidatingSession] = useState<boolean>(true);
 
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await safeApiFetch('/api/auth/logout', {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        credentials: 'include'
+      });
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setProfile(initialProfile);
+    setProject(currentProject);
+    setCategories(defaultHealthCategories);
+    setCriticalIssues(defaultCriticalIssues);
+    setCurrentScreen('login');
+  };
+
   const changeScreen = (screen: ScreenType) => {
     if (screen === 'login') {
-      localStorage.removeItem('token');
-      setIsAuthenticated(false);
-      setCurrentScreen('login');
+      handleLogout();
       return;
     }
     if (!localStorage.getItem('token') && screen !== 'onboarding') {
-      setCurrentScreen('login');
+      handleLogout();
       return;
     }
     setCurrentScreen(screen);
@@ -62,41 +81,39 @@ export default function App() {
         return;
       }
       try {
-        const res = await fetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const data = await safeApiFetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include'
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.profile) {
-            setProfile(data.profile);
-          }
-          if (data.project) {
-            setProject(data.project);
-          }
-          
-          // Also fetch the full profile analytics info to populate the categories
-          const profileRes = await fetch('/api/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (profileRes.ok) {
-            const profileData = await profileRes.json();
-            if (profileData.latestAnalysis) {
-              setCategories(profileData.latestAnalysis.categories);
-              setCriticalIssues(profileData.latestAnalysis.criticalIssues);
-            }
-          }
-
-          setIsAuthenticated(true);
-          setCurrentScreen('dashboard');
-        } else {
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
-          setCurrentScreen('login');
+        if (data.profile) {
+          setProfile(data.profile);
         }
+        if (data.project) {
+          setProject(data.project);
+        }
+        
+        // Also fetch the full profile analytics info to populate categories & issues
+        try {
+          const profileData = await safeApiFetch('/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
+          });
+          if (profileData && profileData.latestAnalysis) {
+            setCategories(profileData.latestAnalysis.categories);
+            setCriticalIssues(profileData.latestAnalysis.criticalIssues);
+          }
+        } catch {
+          // If profile fetch fails, keep current profile
+        }
+
+        setIsAuthenticated(true);
+        setCurrentScreen('dashboard');
       } catch (err) {
         console.error('Session validation failed:', err);
         localStorage.removeItem('token');
         setIsAuthenticated(false);
+        setProfile(initialProfile);
+        setProject(currentProject);
         setCurrentScreen('login');
       } finally {
         setIsValidatingSession(false);
@@ -118,6 +135,7 @@ export default function App() {
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify(updated),
       });
       if (res.ok) {
@@ -144,32 +162,29 @@ export default function App() {
     );
   }
 
-  // Route guard: if unauthenticated and not on onboarding, show the Login screen
-  const isGuestScreen = ['login', 'onboarding'].includes(currentScreen);
-  if (!isAuthenticated && !isGuestScreen) {
-    localStorage.removeItem('token');
+  // Route guard: if unauthenticated, show the Login screen
+  if (!isAuthenticated) {
     return (
       <LoginView
-        onLoginSuccess={(email, token) => {
+        onLoginSuccess={(email, token, userProfile, userProject) => {
           localStorage.setItem('token', token);
           setIsAuthenticated(true);
-          handleUpdateProfile({ email });
-          setCurrentScreen('dashboard');
-        }}
-        onNavigate={changeScreen}
-      />
-    );
-  }
-
-  // Render Login screen (clears session to sign user out)
-  if (currentScreen === 'login') {
-    localStorage.removeItem('token');
-    return (
-      <LoginView
-        onLoginSuccess={(email, token) => {
-          localStorage.setItem('token', token);
-          setIsAuthenticated(true);
-          handleUpdateProfile({ email });
+          if (userProfile) {
+            setProfile(userProfile);
+          }
+          if (userProject) {
+            setProject(userProject);
+          }
+          // Fetch analytics for this user
+          safeApiFetch('/api/profile', {
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
+          }).then(pData => {
+            if (pData?.latestAnalysis) {
+              setCategories(pData.latestAnalysis.categories);
+              setCriticalIssues(pData.latestAnalysis.criticalIssues);
+            }
+          }).catch(() => {});
           setCurrentScreen('dashboard');
         }}
         onNavigate={changeScreen}
@@ -272,6 +287,7 @@ export default function App() {
         profile={profile}
         onOpenDoctor={() => changeScreen('doctor')}
         onOpenIdeaAnalyzer={() => setIsIdeaModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Workspace Layout */}
@@ -372,6 +388,16 @@ export default function App() {
                 className="w-9 h-9 rounded-full object-cover border border-[#BEC9C4]"
               />
             </div>
+
+            {/* Sign Out Button in Header */}
+            <button
+              onClick={handleLogout}
+              title="Sign Out"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#FFDAD3]/50 text-[#7C2E1D] border border-[#BEC9C4]/40 hover:border-[#FFB4A4] rounded-lg text-[12px] font-bold font-['Inter'] transition-colors cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">logout</span>
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </header>
 

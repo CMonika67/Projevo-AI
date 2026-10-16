@@ -526,6 +526,120 @@ describe('Projevo AI Automated Testing Suite', () => {
       expect(resB.status).toBe(200);
       expect(resB.body.profile.university).toBe('Stanford University'); // User B's default university
     });
+
+    it('should reject registration when email format is invalid', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ email: 'invalid-email-format', password: 'Password123' });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('valid email');
+    });
+
+    it('should reject registration when passwords do not match', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: 'mismatch@mit.edu',
+          password: 'Password123',
+          confirmPassword: 'DifferentPassword456'
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Passwords do not match');
+    });
+
+    it('should register a new user with full name and matching passwords', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          fullName: 'Alice Engineering',
+          email: 'alice@mit.edu',
+          password: 'Password123',
+          confirmPassword: 'Password123'
+        });
+      expect(res.status).toBe(201);
+      expect(res.body.email).toBe('alice@mit.edu');
+    });
+
+    it('should request a password reset and return success without revealing email existence', async () => {
+      // 1. Existing user
+      const res1 = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'alice@mit.edu' });
+      expect(res1.status).toBe(200);
+      expect(res1.body).toHaveProperty('message');
+
+      // 2. Non-existent user (must return identical message and never reveal user existence)
+      const res2 = await request(app)
+        .post('/api/auth/forgot-password')
+        .send({ email: 'nonexistent_user@mit.edu' });
+      expect(res2.status).toBe(200);
+      expect(res2.body.message).toBe(res1.body.message);
+    });
+
+    it('should complete a valid password reset and allow logging in with the new password', async () => {
+      // Get the generated code for alice
+      const codeRes = await request(app).get('/api/auth/test-get-code/alice@mit.edu');
+      expect(codeRes.status).toBe(200);
+      const code = codeRes.body.code;
+
+      // Verify code
+      const verifyRes = await request(app)
+        .post('/api/auth/verify-reset-code')
+        .send({ email: 'alice@mit.edu', code });
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body).toHaveProperty('resetToken');
+      const resetToken = verifyRes.body.resetToken;
+
+      // Reset password
+      const resetRes = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          email: 'alice@mit.edu',
+          resetToken,
+          newPassword: 'BrandNewPassword999',
+          confirmNewPassword: 'BrandNewPassword999'
+        });
+      expect(resetRes.status).toBe(200);
+
+      // Old password should fail
+      const failLogin = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'alice@mit.edu', password: 'Password123' });
+      expect(failLogin.status).toBe(400);
+
+      // New password should succeed
+      const successLogin = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'alice@mit.edu', password: 'BrandNewPassword999' });
+      expect(successLogin.status).toBe(200);
+      expect(successLogin.body).toHaveProperty('token');
+    });
+
+    it('should logout user and invalidate session', async () => {
+      // Login alice to get a fresh token
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'alice@mit.edu', password: 'BrandNewPassword999' });
+      const sessionToken = loginRes.body.token;
+
+      // Verify access works
+      const check1 = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${sessionToken}`);
+      expect(check1.status).toBe(200);
+
+      // Logout
+      const logoutRes = await request(app)
+        .post('/api/auth/logout')
+        .set('Authorization', `Bearer ${sessionToken}`);
+      expect(logoutRes.status).toBe(200);
+
+      // Subsequent access with the invalidated token must fail with 401
+      const check2 = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${sessionToken}`);
+      expect(check2.status).toBe(401);
+    });
   });
 
   // --- 9. BASIC SECURITY TESTS ---

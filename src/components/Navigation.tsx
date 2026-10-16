@@ -10,6 +10,7 @@ export interface NavigationProps {
   setMobileMenuOpen?: (open: boolean) => void;
   onOpenDoctor?: () => void;
   onOpenIdeaAnalyzer?: () => void;
+  onLogout?: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -19,6 +20,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   profile,
   mobileMenuOpen: controlledMobileMenuOpen,
   setMobileMenuOpen: controlledSetMobileMenuOpen,
+  onLogout,
 }) => {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isMenuOpen = controlledMobileMenuOpen !== undefined ? controlledMobileMenuOpen : internalMenuOpen;
@@ -139,11 +141,14 @@ export const Navigation: React.FC<NavigationProps> = ({
 
               <div className="pt-4 mt-4 border-t border-[#BEC9C4]/30">
                 <button
-                  onClick={() => handleSelect('login')}
-                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left text-[13px] text-[#7C2E1D] hover:bg-[#FFDAD3]/50"
+                  onClick={() => {
+                    if (onLogout) onLogout();
+                    else handleSelect('login');
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-left text-[13px] text-[#7C2E1D] hover:bg-[#FFDAD3]/50 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">logout</span>
-                  <span>Sign Out / Switch Workspace</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>
@@ -216,14 +221,17 @@ export const Navigation: React.FC<NavigationProps> = ({
           })}
         </nav>
 
-        {/* Footer info & quick switch */}
+        {/* Footer info & quick sign out */}
         <div className="pt-3 border-t border-[#BEC9C4]/40 flex items-center justify-between text-[11px] text-[#6F7975] px-2">
           <button
-            onClick={() => handleSelect('login')}
-            className="hover:text-[#005144] font-medium flex items-center gap-1 cursor-pointer"
+            onClick={() => {
+              if (onLogout) onLogout();
+              else handleSelect('login');
+            }}
+            className="hover:text-[#7C2E1D] font-bold text-[#7C2E1D] flex items-center gap-1 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[15px]">lock</span>
-            Sign In View
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            Sign Out
           </button>
           <span className="text-[10px] font-mono text-[#6F7975]">v2.4 Pro</span>
         </div>

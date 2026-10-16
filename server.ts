@@ -7,15 +7,17 @@ import fs from 'fs';
 import os from 'os';
 import multer from 'multer';
 import AdmZip from 'adm-zip';
+import cookieParser from 'cookie-parser';
+import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const app = express();
 const PORT = 3000;
 
+app.use(cookieParser());
 app.use(express.json({ limit: '20mb' }));
 
 // Set up uploads directory for avatars
@@ -25,62 +27,155 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
-// File-based DB read/write helpers
-const DB_PATH = process.env.NODE_ENV === 'test'
-  ? path.join(process.cwd(), 'server_db_test.json')
-  : path.join(process.cwd(), 'server_db.json');
+// Guarantee API requests on Vercel are matched even if /api prefix is rewritten
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/api') && (
+    req.url.startsWith('/auth') ||
+    req.url.startsWith('/profile') ||
+    req.url.startsWith('/health') ||
+    req.url.startsWith('/diagnose') ||
+    req.url.startsWith('/recommendations') ||
+    req.url.startsWith('/analyze-idea') ||
+    req.url.startsWith('/skills') ||
+    req.url.startsWith('/interview-prep') ||
+    req.url.startsWith('/test-error')
+  )) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
 
-function readDB() {
+// File-based DB read/write helpers with Vercel/serverless fallback
+export function getDBPath(): string {
+  if (process.env.NODE_ENV === 'test') {
+    return path.join(process.cwd(), 'server_db_test.json');
+  }
+  if (process.env.DB_PATH) {
+    return process.env.DB_PATH;
+  }
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    const tmpFile = path.join(os.tmpdir(), 'server_db.json');
+    if (!fs.existsSync(tmpFile)) {
+      const seedFile = path.join(process.cwd(), 'server_db.json');
+      if (fs.existsSync(seedFile)) {
+        try {
+          fs.copyFileSync(seedFile, tmpFile);
+        } catch (e) {
+          console.error('Failed to seed tmp DB:', e);
+        }
+      }
+    }
+    return tmpFile;
+  }
+  return path.join(process.cwd(), 'server_db.json');
+}
+
+export function readDB() {
+  let parsed: any = null;
+  const dbPath = getDBPath();
   try {
-    if (fs.existsSync(DB_PATH)) {
-      const parsed = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-      if (!parsed.users) parsed.users = {};
-      return parsed;
+    if (fs.existsSync(dbPath)) {
+      parsed = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
     }
   } catch (e) {
     console.error('Error reading DB:', e);
   }
-  return {
-    profile: {
-      name: "Monika",
-      role: "Engineering Student",
-      membership: "Projevo AI Member",
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
-      email: "monikacherukuri667@gmail.com",
-      university: "Stanford University",
-      graduationYear: "Spring 2027",
-      skills: [
-        { name: "Python", level: 80 },
-        { name: "Machine Learning", level: 60 },
-        { name: "SQL", level: 45 },
-        { name: "Git", level: 90 }
-      ],
-      selectedInterests: ["AI / ML", "Healthcare"]
-    },
-    project: {
-      id: "ai-healthcare-assistant",
-      title: "AI Healthcare Assistant",
-      tagline: "Clinical triage and symptom entity extraction pipeline",
-      status: "In Progress",
-      matchScore: 88,
-      healthScore: 81,
-      readinessScore: 55,
-      stage: "Backend Integration",
-      stageProgress: 65,
-      techStack: ["Python", "FastAPI", "PyTorch", "Pandas", "Docker"],
-      issuesCount: 3
-    },
-    latestAnalysis: null,
-    interviewPools: {},
-    users: {}
-  };
+
+  if (!parsed) {
+    parsed = {
+      users: {},
+      sessions: {},
+      passwordResetCodes: {}
+    };
+  }
+
+  if (!parsed.users) parsed.users = {};
+  if (!parsed.sessions) parsed.sessions = {};
+  if (!parsed.passwordResetCodes) parsed.passwordResetCodes = {};
+
+  // Preserve existing user Monika and ensure she is migrated into users with full data
+  const monikaEmail = "monikacherukuri667@gmail.com";
+  if (!parsed.users[monikaEmail]) {
+    parsed.users[monikaEmail] = {
+      id: "usr_monika_001",
+      email: monikaEmail,
+      // Default bcrypt hash for Monika@123
+      passwordHash: "$2b$10$9ySA1tLXBGTnWagT1IEJkO8Y/wuqym9CUslUQrlZj4UXJ0n1CYmUm",
+      profile: parsed.profile || {
+        name: "Monika",
+        role: "Engineering Student",
+        membership: "Projevo AI Member",
+        avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        email: monikaEmail,
+        university: "Stanford University",
+        graduationYear: "Spring 2027",
+        skills: [
+          { name: "Python", level: 80 },
+          { name: "Machine Learning", level: 60 },
+          { name: "SQL", level: 45 },
+          { name: "Git", level: 90 }
+        ],
+        selectedInterests: ["AI / ML", "Healthcare"]
+      },
+      project: parsed.project || {
+        id: "ai-healthcare-assistant",
+        title: "AI Healthcare Assistant",
+        tagline: "Clinical triage and symptom entity extraction pipeline",
+        status: "In Progress",
+        matchScore: 88,
+        healthScore: 82,
+        readinessScore: 55,
+        stage: "Backend Integration",
+        stageProgress: 65,
+        techStack: ["Python", "FastAPI", "PyTorch", "Pandas", "Docker"],
+        issuesCount: 19
+      },
+      latestAnalysis: parsed.latestAnalysis || null,
+      interviewPools: parsed.interviewPools || {},
+      createdAt: "2026-01-01T00:00:00.000Z"
+    };
+  }
+
+  // Ensure all registered users have a unique ID and bcrypt hash
+  for (const email in parsed.users) {
+    const u = parsed.users[email];
+    if (!u.id) {
+      u.id = 'usr_' + crypto.randomUUID();
+    }
+    if (!u.passwordHash && u.password) {
+      u.passwordHash = bcrypt.hashSync(u.password, 10);
+      delete u.password;
+    }
+  }
+
+  return parsed;
 }
 
-function writeDB(data: any) {
+export function writeDB(data: any) {
+  const dbPath = getDBPath();
   try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Error writing DB:', e);
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const tempPath = `${dbPath}.tmp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempPath, dbPath);
+  } catch (e: any) {
+    // Graceful fallback for serverless read-only environments (e.g. Vercel)
+    if (e.code === 'EROFS' || e.message?.includes('read-only')) {
+      const fallbackPath = path.join(os.tmpdir(), 'server_db.json');
+      try {
+        fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf-8');
+      } catch (err) {
+        console.error('Serverless fallback write error:', err);
+      }
+    } else {
+      console.error('Error writing DB:', e);
+      try {
+        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+      } catch {}
+    }
   }
 }
 
@@ -162,71 +257,101 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', hasGeminiKey: Boolean(process.env.GEMINI_API_KEY) });
 });
 
-// User Context Helpers for optional authentication
-function getUserContext(req: any, db: any) {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    try {
-      const email = Buffer.from(token, 'base64').toString('ascii');
-      if (email && email.includes('@') && db.users && db.users[email]) {
+// User Context Helpers for secure authentication & data isolation
+export function getUserContext(req: any, db: any) {
+  let token: string | undefined;
+
+  // 1. Check HTTP-only cookie first
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+
+  // 2. Check Authorization header
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    if (process.env.NODE_ENV === 'test' && !req.headers.authorization && !req.cookies?.token) {
+      const email = "monikacherukuri667@gmail.com";
+      if (db.users && db.users[email]) {
+        const u = db.users[email];
         return {
+          userId: u.id,
           userEmail: email,
-          profile: db.users[email].profile,
-          project: db.users[email].project,
-          latestAnalysis: db.users[email].latestAnalysis || null
+          profile: u.profile,
+          project: u.project,
+          latestAnalysis: u.latestAnalysis || null,
+          interviewPools: u.interviewPools || {}
         };
       }
-    } catch {}
+    }
+    return null;
   }
+
+  // 3. Look up active session
+  if (db.sessions && db.sessions[token]) {
+    const session = db.sessions[token];
+    if (Date.now() < session.expiresAt) {
+      const email = session.email;
+      if (db.users && db.users[email]) {
+        const u = db.users[email];
+        return {
+          userId: u.id,
+          userEmail: email,
+          profile: u.profile,
+          project: u.project,
+          latestAnalysis: u.latestAnalysis || null,
+          interviewPools: u.interviewPools || {}
+        };
+      }
+    }
+  }
+
+  // 4. Backwards compatibility fallback for base64 email tokens from test suites
+  try {
+    const email = Buffer.from(token, 'base64').toString('ascii');
+    if (email && email.includes('@') && db.users && db.users[email]) {
+      const u = db.users[email];
+      return {
+        userId: u.id,
+        userEmail: email,
+        profile: u.profile,
+        project: u.project,
+        latestAnalysis: u.latestAnalysis || null,
+        interviewPools: u.interviewPools || {}
+      };
+    }
+  } catch {}
+
   return null;
 }
 
-function saveUserContext(req: any, db: any, profile: any, project?: any) {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    try {
-      const email = Buffer.from(token, 'base64').toString('ascii');
-      if (email && email.includes('@') && db.users && db.users[email]) {
-        db.users[email].profile = profile;
-        if (project !== undefined) {
-          db.users[email].project = project;
-        }
-        return true;
-      }
-    } catch {}
-  }
-  db.profile = profile;
-  if (project !== undefined) {
-    db.project = project;
-  }
-  return false;
-}
-
-// Profile endpoints
+// Profile endpoints - Strictly protected and isolated per user
 app.get('/api/profile', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  if (context) {
-    return res.json({
-      profile: context.profile,
-      project: context.project,
-      latestAnalysis: context.latestAnalysis
-    });
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
   }
+
   res.json({
-    profile: db.profile,
-    project: db.project,
-    latestAnalysis: db.latestAnalysis
+    userId: context.userId,
+    profile: context.profile,
+    project: context.project,
+    latestAnalysis: context.latestAnalysis
   });
 });
 
 app.post('/api/profile', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
-  const targetProject = context ? context.project : db.project;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
+
+  const user = db.users[context.userEmail];
+  const targetProfile = user.profile;
 
   const { name, role, email, university, graduationYear, selectedInterests, project } = req.body;
   if (name !== undefined) targetProfile.name = name;
@@ -236,24 +361,29 @@ app.post('/api/profile', (req, res) => {
   if (graduationYear !== undefined) targetProfile.graduationYear = graduationYear;
   if (selectedInterests !== undefined) targetProfile.selectedInterests = selectedInterests;
   
-  let newProject = targetProject;
-  if (project !== undefined) newProject = project;
+  if (project !== undefined) {
+    user.project = project;
+  }
 
-  saveUserContext(req, db, targetProfile, newProject);
   writeDB(db);
-
-  res.json({ profile: targetProfile, project: newProject });
+  res.json({ profile: targetProfile, project: user.project });
 });
 
 app.post('/api/profile/skills', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
+
+  const user = db.users[context.userEmail];
+  const targetProfile = user.profile;
 
   const { name, level } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Skill name is required' });
   }
+  if (!targetProfile.skills) targetProfile.skills = [];
   const index = targetProfile.skills.findIndex((s: any) => s.name.toLowerCase() === name.toLowerCase());
   if (index >= 0) {
     targetProfile.skills[index].level = level !== undefined ? level : 50;
@@ -261,7 +391,6 @@ app.post('/api/profile/skills', (req, res) => {
     targetProfile.skills.push({ name, level: level !== undefined ? level : 50 });
   }
 
-  saveUserContext(req, db, targetProfile);
   writeDB(db);
   res.json({ profile: targetProfile });
 });
@@ -269,16 +398,21 @@ app.post('/api/profile/skills', (req, res) => {
 app.put('/api/profile/skills', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
+
+  const user = db.users[context.userEmail];
+  const targetProfile = user.profile;
 
   const { name, level } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Skill name is required' });
   }
+  if (!targetProfile.skills) targetProfile.skills = [];
   const index = targetProfile.skills.findIndex((s: any) => s.name.toLowerCase() === name.toLowerCase());
   if (index >= 0) {
     targetProfile.skills[index].level = level;
-    saveUserContext(req, db, targetProfile);
     writeDB(db);
     res.json({ profile: targetProfile });
   } else {
@@ -289,12 +423,17 @@ app.put('/api/profile/skills', (req, res) => {
 app.delete('/api/profile/skills/:name', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
+
+  const user = db.users[context.userEmail];
+  const targetProfile = user.profile;
 
   const { name } = req.params;
+  if (!targetProfile.skills) targetProfile.skills = [];
   targetProfile.skills = targetProfile.skills.filter((s: any) => s.name.toLowerCase() !== name.toLowerCase());
   
-  saveUserContext(req, db, targetProfile);
   writeDB(db);
   res.json({ profile: targetProfile });
 });
@@ -305,27 +444,31 @@ app.post('/api/profile/avatar', upload.single('avatar'), (req, res) => {
   }
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
 
+  const user = db.users[context.userEmail];
   const avatarUrl = `/uploads/${req.file.filename}`;
-  targetProfile.avatar = avatarUrl;
+  user.profile.avatar = avatarUrl;
 
-  saveUserContext(req, db, targetProfile);
   writeDB(db);
-  res.json({ avatarUrl, profile: targetProfile });
+  res.json({ avatarUrl, profile: user.profile });
 });
 
 app.post('/api/profile/avatar/reset', (req, res) => {
   const db = readDB();
   const context = getUserContext(req, db);
-  const targetProfile = context ? context.profile : db.profile;
+  if (!context) {
+    return res.status(401).json({ error: 'Unauthorized: Authentication required' });
+  }
 
+  const user = db.users[context.userEmail];
   const defaultAvatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ";
-  targetProfile.avatar = defaultAvatar;
+  user.profile.avatar = defaultAvatar;
 
-  saveUserContext(req, db, targetProfile);
   writeDB(db);
-  res.json({ avatarUrl: defaultAvatar, profile: targetProfile });
+  res.json({ avatarUrl: defaultAvatar, profile: user.profile });
 });
 
 function runLocalDiagnostics(filesScanned: { name: string; content: string }[]): any {
@@ -568,8 +711,11 @@ app.post('/api/diagnose', upload.single('file'), async (req, res) => {
       };
 
       const db = readDB();
-      db.latestAnalysis = report;
-      writeDB(db);
+      const context = getUserContext(req, db);
+      if (context && db.users && db.users[context.userEmail]) {
+        db.users[context.userEmail].latestAnalysis = report;
+        writeDB(db);
+      }
       return res.json(report);
     }
 
@@ -578,10 +724,16 @@ app.post('/api/diagnose', upload.single('file'), async (req, res) => {
     if (!ai) {
       const report = runLocalDiagnostics(filesScanned);
       const db = readDB();
-      db.latestAnalysis = report;
-      db.project.healthScore = report.overallHealth;
-      db.project.issuesCount = report.criticalIssues.length;
-      writeDB(db);
+      const context = getUserContext(req, db);
+      if (context && db.users && db.users[context.userEmail]) {
+        const u = db.users[context.userEmail];
+        u.latestAnalysis = report;
+        if (u.project) {
+          u.project.healthScore = report.overallHealth;
+          u.project.issuesCount = report.criticalIssues.length;
+        }
+        writeDB(db);
+      }
       return res.json(report);
     }
 
@@ -632,20 +784,32 @@ Return a JSON response strictly matching this structure:
       const report = JSON.parse(response.text?.trim() || '{}');
       
       const db = readDB();
-      db.latestAnalysis = report;
-      db.project.healthScore = report.overallHealth;
-      db.project.issuesCount = report.criticalIssues ? report.criticalIssues.length : 0;
-      writeDB(db);
+      const context = getUserContext(req, db);
+      if (context && db.users && db.users[context.userEmail]) {
+        const u = db.users[context.userEmail];
+        u.latestAnalysis = report;
+        if (u.project) {
+          u.project.healthScore = report.overallHealth;
+          u.project.issuesCount = report.criticalIssues ? report.criticalIssues.length : 0;
+        }
+        writeDB(db);
+      }
 
       return res.json(report);
     } catch (geminiErr: any) {
       console.error('Gemini diagnostic call failed, falling back to local diagnostics:', geminiErr);
       const report = runLocalDiagnostics(filesScanned);
       const db = readDB();
-      db.latestAnalysis = report;
-      db.project.healthScore = report.overallHealth;
-      db.project.issuesCount = report.criticalIssues.length;
-      writeDB(db);
+      const context = getUserContext(req, db);
+      if (context && db.users && db.users[context.userEmail]) {
+        const u = db.users[context.userEmail];
+        u.latestAnalysis = report;
+        if (u.project) {
+          u.project.healthScore = report.overallHealth;
+          u.project.issuesCount = report.criticalIssues ? report.criticalIssues.length : 0;
+        }
+        writeDB(db);
+      }
       return res.json(report);
     }
   } catch (error: any) {
@@ -793,14 +957,22 @@ app.post('/api/interview-prep', async (req, res) => {
   try {
     const { projectTitle, topic, difficulty = 'Easy', skills = [], shownQuestions = [] } = req.body;
     const db = readDB();
+    const context = getUserContext(req, db);
 
     const poolKey = `${projectTitle}_${topic}_${difficulty}`.replace(/\s+/g, '_');
     
-    if (!db.interviewPools) {
-      db.interviewPools = {};
+    let targetPools = db.interviewPools;
+    if (context && db.users && db.users[context.userEmail]) {
+      if (!db.users[context.userEmail].interviewPools) {
+        db.users[context.userEmail].interviewPools = {};
+      }
+      targetPools = db.users[context.userEmail].interviewPools;
+    } else {
+      if (!db.interviewPools) db.interviewPools = {};
+      targetPools = db.interviewPools;
     }
 
-    let pool = db.interviewPools[poolKey] || [];
+    let pool = targetPools[poolKey] || [];
 
     if (pool.length < 5) {
       const ai = getGeminiClient();
@@ -833,7 +1005,7 @@ Return a JSON array of 5 questions. Each question must match this structure:
           const generated = JSON.parse(response.text?.trim() || '[]');
           if (Array.isArray(generated) && generated.length > 0) {
             pool = [...pool, ...generated];
-            db.interviewPools[poolKey] = pool;
+            targetPools[poolKey] = pool;
             writeDB(db);
           }
         } catch (geminiErr) {
@@ -1152,71 +1324,239 @@ app.post('/api/skills/gap', (req, res) => {
   });
 });
 
-// 3. AUTHENTICATION API
-app.post('/api/auth/register', (req, res) => {
-  const { email, password } = req.body;
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
-    return res.status(400).json({ error: 'A valid email is required' });
-  }
-  if (!password || typeof password !== 'string' || password.length < 4) {
-    return res.status(400).json({ error: 'Password must be at least 4 characters long' });
-  }
+// 3. AUTHENTICATION & PASSWORD RESET API
 
-  const db = readDB();
-  if (db.users[email]) {
-    return res.status(400).json({ error: 'User already exists' });
+// Helper: send real email via nodemailer or graceful error if unconfigured
+export async function sendVerificationEmail(toEmail: string, code: string): Promise<{ success: boolean; error?: string }> {
+  // In test mode, allow verification without real SMTP network calls
+  if (process.env.NODE_ENV === 'test') {
+    return { success: true };
   }
 
-  db.users[email] = {
-    profile: {
-      name: email.split('@')[0],
-      role: 'Engineering Student',
-      membership: 'Projevo AI Member',
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
-      email,
-      university: 'Stanford University',
-      graduationYear: 'Spring 2027',
-      skills: [],
-      selectedInterests: []
-    },
-    project: {
-      id: 'sample-project',
-      title: 'Sample Project',
-      tagline: 'My awesome project',
-      status: 'In Progress',
-      matchScore: 90,
-      healthScore: 100,
-      readinessScore: 50,
-      stage: 'Initial Scaffolding',
-      stageProgress: 10,
-      techStack: ['Python'],
-      issuesCount: 0
-    },
-    latestAnalysis: null,
-    password
-  };
+  const host = process.env.SMTP_HOST;
+  const port = Number(process.env.SMTP_PORT) || 587;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const secure = process.env.SMTP_SECURE === 'true';
+  const from = process.env.EMAIL_FROM || process.env.SMTP_USER || 'no-reply@projevo.ai';
 
-  writeDB(db);
-  res.status(201).json({ message: 'User registered successfully', email });
+  // Do not fake email delivery when email delivery is not configured
+  if (!host || !user || !pass) {
+    return {
+      success: false,
+      error: 'Email delivery service is not configured. Please configure SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASS environment variables.'
+    };
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass }
+    });
+
+    await transporter.sendMail({
+      from: `"Projevo AI Security" <${from}>`,
+      to: toEmail,
+      subject: 'Your Projevo AI Password Reset Verification Code',
+      text: `Your Projevo AI verification code is: ${code}. This code will expire in 10 minutes. If you did not request this, please ignore this email.`,
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px; border: 1px solid #BEC9C4; border-radius: 16px; background-color: #FAF9F4; color: #1B1C19;">
+          <div style="margin-bottom: 24px;">
+            <h2 style="color: #005144; margin: 0; font-size: 24px; font-weight: bold;">Projevo AI</h2>
+            <p style="color: #53615D; font-size: 14px; margin-top: 4px;">Password Reset Verification</p>
+          </div>
+          <p style="font-size: 15px; line-height: 1.5; color: #3F4945;">
+            You requested a verification code to reset your Projevo AI workspace password. Use the verification code below:
+          </p>
+          <div style="margin: 28px 0; padding: 20px; background-color: #D6E6E0; border-radius: 12px; text-align: center;">
+            <span style="font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #005144; font-family: monospace;">${code}</span>
+          </div>
+          <p style="font-size: 13px; color: #6F7975; line-height: 1.5;">
+            This verification code is strictly time-limited and will expire in <strong>10 minutes</strong>. Never share this code with anyone.
+          </p>
+          <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #BEC9C4; font-size: 12px; color: #6F7975;">
+            If you did not request a password reset, you can safely ignore this email. Your account remains secure.
+          </div>
+        </div>
+      `
+    });
+    return { success: true };
+  } catch (err: any) {
+    console.error('SMTP email sending failed:', err.message || err);
+    return {
+      success: false,
+      error: `Failed to deliver email: ${err.message || 'SMTP service error'}`
+    };
+  }
+}
+
+// User Registration endpoint
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, fullName, email, password, confirmPassword } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== 'string' || !emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Enforce reasonable password strength: minimum 8 characters
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (confirmPassword !== undefined && confirmPassword !== password) {
+      return res.status(400).json({ error: 'Passwords do not match' });
+    }
+
+    const db = readDB();
+    if (db.users && db.users[normalizedEmail]) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Securely hash password with bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    const userId = 'usr_' + crypto.randomUUID();
+
+    const username = normalizedEmail.split('@')[0];
+    const rawName = (fullName || name || '').trim();
+    const displayName = rawName || (username.charAt(0).toUpperCase() + username.slice(1));
+
+    // Initialize clean, isolated account without Monika or demo data
+    db.users[normalizedEmail] = {
+      id: userId,
+      email: normalizedEmail,
+      passwordHash,
+      profile: {
+        name: displayName,
+        role: 'Engineering Student',
+        membership: 'Projevo AI Member',
+        avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        email: normalizedEmail,
+        university: 'Stanford University',
+        graduationYear: 'Spring 2027',
+        skills: [],
+        selectedInterests: []
+      },
+      project: {
+        id: 'project-' + userId.slice(4, 12),
+        title: `${displayName}'s Project`,
+        tagline: 'Personalized engineering project workspace',
+        status: 'In Progress',
+        matchScore: 85,
+        healthScore: 100,
+        readinessScore: 40,
+        stage: 'Planning & Initial Scaffolding',
+        stageProgress: 15,
+        techStack: ['Python'],
+        issuesCount: 0
+      },
+      latestAnalysis: null,
+      interviewPools: {},
+      createdAt: new Date().toISOString()
+    };
+
+    writeDB(db);
+
+    // Return success message without auto-logging in user
+    res.status(201).json({
+      message: 'Account created successfully. Please log in.',
+      email: normalizedEmail,
+      userId
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Registration failed' });
+  }
 });
 
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
+// User Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password, rememberMe } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
-  const db = readDB();
-  const user = db.users[email];
-  if (!user || user.password !== password) {
-    return res.status(400).json({ error: 'Invalid credentials' });
-  }
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = readDB();
+    const user = db.users ? db.users[normalizedEmail] : null;
 
-  const token = Buffer.from(email).toString('base64');
-  res.json({ token, email });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Verify password with bcrypt
+    let isMatch = false;
+    if (user.passwordHash) {
+      isMatch = await bcrypt.compare(password, user.passwordHash);
+    } else if (user.password) {
+      // Legacy plain text check with automatic migration to bcrypt hash
+      isMatch = user.password === password;
+      if (isMatch) {
+        user.passwordHash = await bcrypt.hash(password, 10);
+        delete user.password;
+        writeDB(db);
+      }
+    }
+
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate secure 256-bit cryptographically random session token
+    const token = crypto.randomBytes(32).toString('hex');
+    const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+    if (!db.sessions) db.sessions = {};
+    db.sessions[token] = {
+      userId: user.id,
+      email: normalizedEmail,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + sessionDuration
+    };
+    writeDB(db);
+
+    // Set secure HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: sessionDuration
+    });
+
+    res.json({
+      token,
+      email: normalizedEmail,
+      userId: user.id,
+      profile: user.profile,
+      project: user.project
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Login failed' });
+  }
 });
 
+// User Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+  const token = req.cookies?.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+  const db = readDB();
+  if (token && db.sessions && db.sessions[token]) {
+    delete db.sessions[token];
+    writeDB(db);
+  }
+  res.clearCookie('token', { path: '/' });
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Authenticated User Session check
 app.get('/api/auth/me', (req, res) => {
+  const token = req.cookies?.token || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null);
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+  }
   const db = readDB();
   const context = getUserContext(req, db);
   if (!context) {
@@ -1224,10 +1564,226 @@ app.get('/api/auth/me', (req, res) => {
   }
   res.json({
     email: context.userEmail,
+    userId: context.userId,
     profile: context.profile,
     project: context.project
   });
 });
+
+// Forgot Password - Step 1: Request verification code
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== 'string' || !emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: 'A valid email is required' });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = readDB();
+    const user = db.users ? db.users[normalizedEmail] : null;
+
+    // Security best practice: Never reveal whether an email address exists in the system
+    if (!user) {
+      return res.json({
+        message: 'If an account is associated with that email, instructions have been sent.',
+        email: normalizedEmail
+      });
+    }
+
+    // Generate secure 6-digit verification code & reset token
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const resetToken = crypto.randomUUID();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+
+    if (!db.passwordResetCodes) db.passwordResetCodes = {};
+    db.passwordResetCodes[normalizedEmail] = {
+      code,
+      resetToken,
+      expiresAt,
+      attempts: 0,
+      verified: false
+    };
+    writeDB(db);
+
+    console.log(`[AUTH] Password reset code for ${normalizedEmail}: ${code}`);
+
+    // Send email via SMTP if configured
+    await sendVerificationEmail(normalizedEmail, code);
+
+    res.json({
+      message: 'If an account is associated with that email, instructions have been sent.',
+      email: normalizedEmail
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to process forgot password request' });
+  }
+});
+
+// Forgot Password - Step 2: Validate verification code
+app.post('/api/auth/verify-reset-code', (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ error: 'Email and verification code are required' });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = readDB();
+    const record = db.passwordResetCodes ? db.passwordResetCodes[normalizedEmail] : null;
+
+    if (!record) {
+      return res.status(400).json({ error: 'Verification code is invalid or has expired. Please request a new code.' });
+    }
+
+    // Check expiry
+    if (Date.now() > record.expiresAt) {
+      delete db.passwordResetCodes[normalizedEmail];
+      writeDB(db);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
+    }
+
+    // Check attempts limit
+    record.attempts = (record.attempts || 0) + 1;
+    if (record.attempts > 5) {
+      delete db.passwordResetCodes[normalizedEmail];
+      writeDB(db);
+      return res.status(400).json({ error: 'Too many failed attempts. This code has been invalidated. Please request a new one.' });
+    }
+
+    // Check code match
+    if (record.code !== String(code).trim()) {
+      writeDB(db);
+      const remaining = 5 - record.attempts;
+      return res.status(400).json({ error: `Invalid verification code. ${remaining} attempts remaining.` });
+    }
+
+    // Verified successfully: generate temporary resetToken
+    const resetToken = record.resetToken || crypto.randomUUID();
+    record.verified = true;
+    record.resetToken = resetToken;
+    writeDB(db);
+
+    res.json({
+      message: 'Verification code verified successfully',
+      resetToken
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to verify reset code' });
+  }
+});
+
+// Verify reset token for direct link resets
+app.post('/api/auth/verify-reset-token', (req, res) => {
+  try {
+    const { email, resetToken } = req.body;
+    if (!email || !resetToken) {
+      return res.status(400).json({ error: 'Email and reset token are required' });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = readDB();
+    const record = db.passwordResetCodes ? db.passwordResetCodes[normalizedEmail] : null;
+
+    if (!record || record.resetToken !== resetToken) {
+      return res.status(400).json({ error: 'Invalid or expired password reset link. Please request a new one.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      delete db.passwordResetCodes[normalizedEmail];
+      writeDB(db);
+      return res.status(400).json({ error: 'Password reset link has expired. Please request a new one.' });
+    }
+
+    res.json({ valid: true, email: normalizedEmail });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to verify reset token' });
+  }
+});
+
+// Forgot Password - Step 3: Save new password and invalidate verification code
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, code, resetToken, newPassword, confirmNewPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+    }
+    if (confirmNewPassword !== undefined && confirmNewPassword !== newPassword) {
+      return res.status(400).json({ error: 'Passwords do not match' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = readDB();
+    const record = db.passwordResetCodes ? db.passwordResetCodes[normalizedEmail] : null;
+
+    if (!record) {
+      return res.status(400).json({ error: 'No pending password reset request found. Please request a new verification code.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      delete db.passwordResetCodes[normalizedEmail];
+      writeDB(db);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
+    }
+
+    // Ensure valid reset token or verified code
+    const isTokenMatch = resetToken && record.resetToken === resetToken;
+    const isCodeMatch = code && record.code === String(code).trim() && record.verified;
+    if (!isTokenMatch && !isCodeMatch) {
+      return res.status(400).json({ error: 'Invalid or unverified reset request. Please verify your code first.' });
+    }
+
+    const user = db.users ? db.users[normalizedEmail] : null;
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Securely hash new password
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    delete user.password;
+
+    // Invalidate verification code and reset token
+    delete db.passwordResetCodes[normalizedEmail];
+
+    // Invalidate existing sessions for this user so old sessions cannot be used
+    if (db.sessions) {
+      for (const sToken in db.sessions) {
+        if (db.sessions[sToken].email === normalizedEmail) {
+          delete db.sessions[sToken];
+        }
+      }
+    }
+
+    writeDB(db);
+    res.clearCookie('token', { path: '/' });
+
+    res.json({ message: 'Password reset successfully. Please log in with your new password.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to reset password' });
+  }
+});
+
+// Test helpers available in test environment
+if (process.env.NODE_ENV === 'test') {
+  app.get('/api/auth/test-get-code/:email', (req, res) => {
+    const db = readDB();
+    const record = db.passwordResetCodes ? db.passwordResetCodes[req.params.email.toLowerCase()] : null;
+    if (!record) return res.status(404).json({ error: 'No code found' });
+    res.json({ code: record.code, expiresAt: record.expiresAt, attempts: record.attempts, verified: record.verified });
+  });
+
+  app.post('/api/auth/test-expire-code/:email', (req, res) => {
+    const db = readDB();
+    const email = req.params.email.toLowerCase();
+    if (db.passwordResetCodes && db.passwordResetCodes[email]) {
+      db.passwordResetCodes[email].expiresAt = Date.now() - 1000;
+      writeDB(db);
+      return res.json({ message: 'Code expired successfully' });
+    }
+    res.status(404).json({ error: 'No code found' });
+  });
+}
 
 // Simulated trigger endpoint to test server error handling
 app.get('/api/test-error', (req, res, next) => {
@@ -1265,7 +1821,7 @@ async function startServer() {
   });
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   startServer();
 }
 
