@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenType, UserProfile } from '../types';
+import { UserAvatar } from './UserAvatar';
 
 export interface NavigationProps {
   currentScreen: ScreenType;
@@ -82,12 +83,12 @@ export const Navigation: React.FC<NavigationProps> = ({
 
         <div
           onClick={() => handleSelect('profile')}
-          className="w-9 h-9 rounded-full overflow-hidden bg-[#EFEEE9] border border-[#BEC9C4] cursor-pointer"
+          className="w-9 h-9 rounded-full overflow-hidden border border-[#BEC9C4] cursor-pointer shrink-0"
         >
-          <img
-            alt={profile.name}
-            className="w-full h-full object-cover"
+          <UserAvatar
+            name={profile.name}
             src={profile.avatar}
+            className="w-full h-full"
           />
         </div>
       </header>
@@ -103,10 +104,10 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 p-3 mb-4 border-b border-[#BEC9C4]/30">
-              <img
+              <UserAvatar
                 src={profile.avatar}
-                alt={profile.name}
-                className="w-11 h-11 rounded-full object-cover border border-[#BEC9C4]"
+                name={profile.name}
+                className="w-11 h-11 border border-[#BEC9C4]"
               />
               <div>
                 <h3 className="text-[17px] font-bold text-[#005144]">{profile.name}</h3>
@@ -174,11 +175,11 @@ export const Navigation: React.FC<NavigationProps> = ({
           onClick={() => handleSelect('profile')}
           className="flex items-center gap-3 mb-5 p-2.5 rounded-xl hover:bg-[#F5F4EF] cursor-pointer transition-colors bg-white/60 border border-[#BEC9C4]/30"
         >
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-[#EFEEE9] border border-[#BEC9C4] shrink-0">
-            <img
-              alt={profile.name}
-              className="w-full h-full object-cover"
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-[#BEC9C4] shrink-0">
+            <UserAvatar
+              name={profile.name}
               src={profile.avatar}
+              className="w-full h-full"
             />
           </div>
           <div className="flex flex-col min-w-0">

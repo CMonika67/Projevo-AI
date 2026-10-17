@@ -23,7 +23,9 @@ import { ProjectDiscoveryView } from './components/ProjectDiscoveryView';
 import { InterviewPrepView } from './components/InterviewPrepView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
+import { UserAvatar } from './components/UserAvatar';
 import { safeApiFetch } from './api';
+import { firebaseSignOut } from './firebase';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
@@ -32,16 +34,14 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
       await safeApiFetch('/api/auth/logout', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include'
       });
+      await firebaseSignOut();
     } catch (e) {
       console.error('Logout error:', e);
     }
-    localStorage.removeItem('token');
     setIsAuthenticated(false);
     setProfile(initialProfile);
     setProject(currentProject);
@@ -55,7 +55,7 @@ export default function App() {
       handleLogout();
       return;
     }
-    if (!localStorage.getItem('token') && screen !== 'onboarding') {
+    if (!isAuthenticated && screen !== 'onboarding') {
       handleLogout();
       return;
     }
@@ -70,19 +70,11 @@ export default function App() {
   const [notificationCount, setNotificationCount] = useState(3);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
 
-  // Check session validity on startup/refresh
+  // Check session validity on startup/refresh via HttpOnly cookie
   useEffect(() => {
     async function checkSession() {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsValidatingSession(false);
-        setCurrentScreen('login');
-        return;
-      }
       try {
         const data = await safeApiFetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         });
         if (data.profile) {
@@ -95,7 +87,6 @@ export default function App() {
         // Also fetch the full profile analytics info to populate categories & issues
         try {
           const profileData = await safeApiFetch('/api/profile', {
-            headers: { 'Authorization': `Bearer ${token}` },
             credentials: 'include'
           });
           if (profileData && profileData.latestAnalysis) {
@@ -109,11 +100,7 @@ export default function App() {
         setIsAuthenticated(true);
         setCurrentScreen('dashboard');
       } catch (err) {
-        console.error('Session validation failed:', err);
-        localStorage.removeItem('token');
         setIsAuthenticated(false);
-        setProfile(initialProfile);
-        setProject(currentProject);
         setCurrentScreen('login');
       } finally {
         setIsValidatingSession(false);
@@ -126,23 +113,15 @@ export default function App() {
     try {
       setProfile((prev) => ({ ...prev, ...updated }));
       
-      const token = localStorage.getItem('token');
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const res = await fetch('/api/profile', {
+      const res = await safeApiFetch('/api/profile', {
         method: 'POST',
-        headers,
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data.profile);
-        if (data.project) {
-          setProject(data.project);
+      if (res && res.profile) {
+        setProfile(res.profile);
+        if (res.project) {
+          setProject(res.project);
         }
       }
     } catch (err) {
@@ -166,8 +145,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <LoginView
-        onLoginSuccess={(email, token, userProfile, userProject) => {
-          localStorage.setItem('token', token);
+        onLoginSuccess={(email, userProfile, userProject) => {
           setIsAuthenticated(true);
           if (userProfile) {
             setProfile(userProfile);
@@ -175,11 +153,8 @@ export default function App() {
           if (userProject) {
             setProject(userProject);
           }
-          // Fetch analytics for this user
-          safeApiFetch('/api/profile', {
-            headers: { 'Authorization': `Bearer ${token}` },
-            credentials: 'include'
-          }).then(pData => {
+          // Fetch analytics for this user via cookie session
+          safeApiFetch('/api/profile').then(pData => {
             if (pData?.latestAnalysis) {
               setCategories(pData.latestAnalysis.categories);
               setCriticalIssues(pData.latestAnalysis.criticalIssues);
@@ -382,10 +357,10 @@ export default function App() {
               onClick={() => changeScreen('profile')}
               className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-white/80 transition-colors"
             >
-              <img
+              <UserAvatar
                 src={profile.avatar}
-                alt={profile.name}
-                className="w-9 h-9 rounded-full object-cover border border-[#BEC9C4]"
+                name={profile.name}
+                className="w-9 h-9 border border-[#BEC9C4]"
               />
             </div>
 

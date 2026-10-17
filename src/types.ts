@@ -21,6 +21,7 @@ export interface UserProfile {
   selectedInterests: string[];
   university?: string;
   graduationYear?: string;
+  githubUsername?: string;
 }
 
 export interface ProjectData {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile, ScreenType } from '../types';
+import { UserAvatar } from './UserAvatar';
 
 interface ProfileSettingsViewProps {
   profile: UserProfile;
@@ -36,6 +37,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
   const [email, setEmail] = useState(profile.email);
   const [university, setUniversity] = useState(profile.university || 'Stanford University');
   const [graduationYear, setGraduationYear] = useState(profile.graduationYear || 'Spring 2027');
+  const [githubUsername, setGithubUsername] = useState(profile.githubUsername || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Avatar states
@@ -49,7 +51,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateProfile({ name, role, email, university, graduationYear });
+    onUpdateProfile({ name, role, email, university, graduationYear, githubUsername });
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2000);
   };
@@ -82,10 +84,8 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
     formData.append('avatar', file);
 
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include',
         body: formData
       });
@@ -104,10 +104,8 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
 
   const handleRemoveAvatar = async () => {
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar/reset', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include'
       });
       if (res.ok) {
@@ -127,13 +125,9 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
     const skillLevelNum = levelToPercentage(newSkillLevel);
 
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/profile/skills', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ name: newSkillName.trim(), level: skillLevelNum })
       });
@@ -159,13 +153,8 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
   const handleDeleteSkill = async (index: number) => {
     const skill = profile.skills[index];
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch(`/api/profile/skills/${encodeURIComponent(skill.name)}`, {
         method: 'DELETE',
-        headers,
         credentials: 'include'
       });
       if (res.ok) {
@@ -205,11 +194,12 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Profile Card */}
         <div className="bg-white rounded-2xl p-6 md:p-8 bento-shadow border border-[#BEC9C4]/40 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#005144] p-0.5 mb-4 shadow-sm relative group">
-            <img
+          <div className="w-24 h-24 rounded-full border-2 border-[#005144] p-0.5 mb-4 shadow-sm relative group overflow-hidden">
+            <UserAvatar
               src={avatarPreview || profile.avatar}
-              alt={profile.name}
-              className="w-full h-full object-cover rounded-full"
+              name={name || profile.name}
+              className="w-full h-full"
+              fontSize="text-[36px] font-extrabold"
             />
             {/* Overlay for uploading image on hover */}
             <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-full flex flex-col items-center justify-center text-white text-[11px] font-bold cursor-pointer transition-opacity">
@@ -237,7 +227,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
                   accept="image/png, image/jpeg, image/jpg"
                 />
               </label>
-              {profile.avatar !== MONIKA_AVATAR && (
+              {(profile.avatar || avatarPreview) && (
                 <button
                   type="button"
                   onClick={handleRemoveAvatar}
@@ -270,10 +260,19 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
             </div>
             <div className="flex items-center justify-between text-[13px]">
               <span className="text-[#6F7975]">Verified GitHub</span>
-              <span className="font-bold text-[#2E8B70] flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                @monikac-eng
-              </span>
+              {githubUsername ? (
+                <a
+                  href={`https://github.com/${githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#2E8B70] hover:underline flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                  @{githubUsername}
+                </a>
+              ) : (
+                <span className="text-[#6F7975] text-[12px] italic">Not connected</span>
+              )}
             </div>
           </div>
         </div>
@@ -346,16 +345,36 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
               </div>
             </div>
 
-            <div>
-              <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5">
-                University Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl px-4 text-[14px] text-[#1B1C19] focus:ring-2 focus:ring-[#005144] focus:outline-none"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5">
+                  University Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-11 bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl px-4 text-[14px] text-[#1B1C19] focus:ring-2 focus:ring-[#005144] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5">
+                  GitHub Profile Handle
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975] text-[14px] font-bold">
+                    @
+                  </div>
+                  <input
+                    type="text"
+                    value={githubUsername}
+                    onChange={(e) => setGithubUsername(e.target.value)}
+                    placeholder="e.g. your-github-username"
+                    className="w-full h-11 bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl pl-8 pr-4 text-[14px] text-[#1B1C19] focus:ring-2 focus:ring-[#005144] focus:outline-none placeholder-[#6F7975]"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="pt-2">

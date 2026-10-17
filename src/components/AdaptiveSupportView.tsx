@@ -33,13 +33,9 @@ export const AdaptiveSupportView: React.FC<AdaptiveSupportViewProps> = ({
     } else {
       // Re-query AI hint
       try {
-        const token = localStorage.getItem('token');
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-
         const res = await fetch('/api/adaptive-hint', {
           method: 'POST',
-          headers,
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ code, currentError: 'NameError on line 19', hintLevel: 3 })
         });
@@ -113,13 +109,9 @@ if __name__ == '__main__':
     setCustomQuestion('');
 
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/adaptive-hint', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ code, currentError: q, hintLevel: 2 })
       });

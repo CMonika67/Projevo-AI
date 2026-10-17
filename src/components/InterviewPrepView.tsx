@@ -33,13 +33,9 @@ export const InterviewPrepView: React.FC<InterviewPrepViewProps> = ({
     setStudentAnswer('');
 
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/interview-prep', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ projectTitle, topic })
       });
