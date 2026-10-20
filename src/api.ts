@@ -29,20 +29,22 @@ export async function safeApiFetch<T = any>(
     }
   } else {
     // Safe non-JSON response handling (e.g. plain text or HTML 404/500 pages)
-    await res.text().catch(() => '');
+    const text = await res.text().catch(() => '');
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error('The requested service was not found. Please try again later.');
       }
       if (res.status >= 500) {
-        throw new Error('An unexpected server error occurred. Please try again later.');
+        throw new Error(text && text.length < 200 && !text.includes('<!DOCTYPE') ? text : 'An unexpected server error occurred. Please try again later.');
       }
       throw new Error(`Request failed with status ${res.status}.`);
     }
   }
 
   if (!res.ok) {
-    const errorMsg = data?.error || data?.message || `Request failed with status ${res.status}`;
+    const mainMsg = data?.error || data?.message;
+    const details = data?.details && data?.details !== mainMsg ? ` (${data.details})` : '';
+    const errorMsg = mainMsg ? `${mainMsg}${details}` : `Request failed with status ${res.status}`;
     throw new Error(errorMsg);
   }
 
