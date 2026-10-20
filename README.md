@@ -17,7 +17,6 @@
 [![Supabase](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tests](https://img.shields.io/badge/Tests-175%20Passing-22C55E?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Security Audit](https://img.shields.io/badge/Security-Hardened%20%26%20Zero--Leakage-10B981?style=for-the-badge&logo=shield)](https://github.com/CMonika67/Projevo-AI)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 <br />
 
