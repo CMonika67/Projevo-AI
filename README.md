@@ -2,240 +2,259 @@
 
 # 🚀 Projevo AI
 
-### **AI-Powered Engineering Project Mentor & Development Ecosystem**
+### **The Intelligent Engineering Project Co-Pilot & Technical Defense Ecosystem**
 
-*Accelerating engineering students from initial ideation to academic viva & technical interview defense.*
+*From initial architectural ideation to production-grade code diagnostics, skill roadmap mastery, and rigorous viva/interview defense.*
 
 ---
 
-[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-4.21-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
-[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Tests](https://img.shields.io/badge/Vitest-62%20Passed-22C55E?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
-[![Security Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-brightgreen?style=flat-square&logo=shield)](https://github.com/CMonika67/Projevo-AI)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.21-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Google Gemini](https://img.shields.io/badge/AI-Google%20Gemini%202.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Supabase](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tests](https://img.shields.io/badge/Tests-175%20Passing-22C55E?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Security Audit](https://img.shields.io/badge/Security-Hardened%20%26%20Zero--Leakage-10B981?style=for-the-badge&logo=shield)](https://github.com/CMonika67/Projevo-AI)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 <br />
 
 <p align="center">
-  <a href="#-key-features"><b>Explore Features</b></a> •
-  <a href="#-architecture--workflow"><b>Architecture</b></a> •
+  <a href="#-the-uniqueness-of-projevo-ai"><b>Why Projevo AI?</b></a> •
+  <a href="#-core-pillars--feature-tour"><b>Core Pillars</b></a> •
+  <a href="#-architecture--data-flow"><b>Architecture</b></a> •
+  <a href="#-competitive-matrix"><b>Uniqueness Matrix</b></a> •
+  <a href="#-tech-stack"><b>Tech Stack</b></a> •
   <a href="#-quick-start"><b>Quick Start</b></a> •
-  <a href="#-security--hardening"><b>Security</b></a> •
-  <a href="#-automated-testing"><b>Testing</b></a> •
-  <a href="#-tech-stack"><b>Tech Stack</b></a>
+  <a href="#-automated-testing--verification"><b>Testing (175 Tests)</b></a> •
+  <a href="#-enterprise-grade-security"><b>Security</b></a>
 </p>
 
 </div>
 
 ---
 
-## 📖 Overview
+## 🌟 The Uniqueness of Projevo AI
 
-**Projevo AI** is an intelligent, full-stack mentor designed specifically for engineering undergraduates and developers. Most existing tools solve only isolated steps of development — like syntax highlighting or generic LLM chat. 
+Most developer tools solve isolated problems: **ChatGPT** produces generic text without repo context; **GitHub Copilot** autocompletes lines without evaluating architectural trade-offs; **LeetCode** focuses on abstract puzzles rather than full-stack system design; and static linters flag typos without providing interview-ready justifications.
 
-Projevo AI bridges the entire lifecycle: helping students discover tailored project ideas, diagnose multi-file codebases, receive adaptive learning hints, and rehearse rigorous viva questions and technical architectural defense before university faculty or industry recruiters.
+**Projevo AI is built differently.** It is the first end-to-end engineering career co-pilot specifically engineered for student builders, capstone teams, and technical interview candidates:
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Understand  │ ──> │   Analyze    │ ──> │   Diagnose   │ ──> │    Defend    │
-│    Skills    │     │  Feasibility │     │  Code Health │     │  Viva & Prep │
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
-```
-
----
-
-## ✨ Key Features
-
-### 🩺 1. Project Doctor (AI Code Diagnostics)
-- **Multi-File & Archive Inspection**: Upload `.zip`, `.py`, `.js`, `.ts`, `.tsx`, `.json`, or `.txt` projects.
-- **Deep Code Health Scoring**: Generates categorical health scores across **Architecture**, **Code Quality**, **Security**, **Performance**, and **Accessibility**.
-- **Issue Detection & Remediation**: Pinpoints exact files, line numbers, issue descriptions, and actionable code fixes.
-- **Enterprise-Grade Zip Slip Protection**: Path-sanitizing unzipper rejects symlinks, directory traversal attacks, and files exceeding strict resource limits.
-
-### 💡 2. Idea Analyzer & Feasibility Engine
-- **Viability Assessment**: Evaluates proposed project concepts against real-world engineering standards.
-- **Prerequisite Gap Analysis**: Compares project requirements directly against the student's current skill profile.
-- **Recommended Tech Stack**: Outlines optimal frameworks, databases, libraries, and deployment strategies.
-
-### 🧠 3. Adaptive Learning & Contextual Support
-- **Step-by-Step Scaffolding**: Offers graded hints that guide students toward solutions without simply giving away answers.
-- **Tailored Explanations**: Contextualized using the student's known strengths and declared target career domains.
-
-### 🎯 4. Viva & Technical Interview Simulator
-- **Rigorous Question Generation**: Produces challenging viva questions based on the student's actual codebase and architectural decisions.
-- **Multi-Angle Coverage**: Drills on algorithmic choices, failure modes, scalability limits, database normalization, and security trade-offs.
-- **Expected Answers & Key Points**: Clear rubrics to assist students in mastering technical articulation.
-
-### 👤 5. Student Profile & Dynamic Skill Matrix
-- **Customizable Skill Matrix**: Visual sliders to track progress in languages, frameworks, and methodologies.
-- **Smart Avatar Engine**: Generates Google-style deterministic monogram avatars when no custom photo is uploaded.
-- **Verified GitHub Integration**: Optional GitHub connection displaying active developer credentials.
-
-### 🔐 6. Hardened Security by Design
-- **Secure Authentication**: HttpOnly, SameSite, and conditionally Secure session cookies prevent XSS credential theft.
-- **Rate-Limited Endpoints**: Protects `/api/auth/login`, `/api/auth/register`, and `/api/auth/forgot-password` against brute-force attacks.
-- **Prompt Injection Sandboxing**: Encapsulates untrusted student code in `<untrusted_student_code>` XML tags with strict system instructions for the LLM.
-- **Zero-Vulnerability Baseline**: Transitive dependency pinning (`@grpc/grpc-js`) ensures `0` vulnerabilities in `npm audit`.
+1. **Full-Lifecycle Engineering Co-Pilot**: Guides builders from raw concept feasibility, prerequisite skill gap analysis, and system blueprints to live code auditing and final viva defense.
+2. **Context-Aware Code Diagnostics (Project Doctor)**: Quarantines, scans, and scores entire multi-file project archives (`.zip`, `.py`, `.ts`, `.tsx`, `.js`) across 6 architectural dimensions with actionable remediation patches.
+3. **Viva & Technical Defense Rehearsal**: Simulates rigorous university faculty vivas and Big-Tech architecture interrogations based on the user's *actual codebase* and design choices.
+4. **Zero-Latency Single-Turn AI Engine**: Optimized prompt orchestration eliminates slow chained requests, delivering structured feasibility blueprints and interview question batches in a single high-speed Gemini roundtrip.
+5. **Resilient Dual-Engine Persistence**: Seamlessly operates in zero-config offline mode (ACID-guaranteed local atomic store) and connects natively to cloud **Supabase PostgreSQL with Row-Level Security** in production.
 
 ---
 
-## 🏛 Architecture & Workflow
+## 🏛 Architecture & Data Flow
 
 ```mermaid
-flowchart TD
-    subgraph Client ["Client Layer (React 19 + TypeScript + Vite)"]
-        UI[Interactive UI Views]
-        AuthUI[Login / Google Sign-In]
-        DoctorUI[Project Doctor Upload]
-        ProfileUI[Profile & Skill Settings]
+flowchart TB
+    subgraph Client ["Client Presentation Layer (React 19 + TypeScript + Vite)"]
+        UI["Modern Responsive UI\n(Tailwind + Lucide Icons)"]
+        AuthView["Auth Choices Screen\n(Email/Password • 6-Digit OTP • Google Popup)"]
+        DoctorView["Project Doctor\n(ZIP & Multi-File Drag-and-Drop)"]
+        IdeaView["Idea Feasibility\n& Blueprint Generator"]
+        InterviewView["Viva Simulator\n& Technical Interview Coach"]
+        ProfileView["Skill Matrix &\nProfile Settings"]
     end
 
-    subgraph Server ["Server Layer (Node.js 24 + Express 4.21)"]
-        MW[Rate Limiters & Cookie Parser]
-        AuthRouter[Session & Auth Handler]
-        DoctorRouter[Multer + AdmZip Safe Extractor]
-        AIRouter[Gemini AI Client Orchestrator]
-        Mutex[mutateDB Atomic Write Lock]
+    subgraph SecurityGateway ["Security & Middleware Gateway (Express 4.21)"]
+        RateLimit["express-rate-limit\n(Tiered IP Brute-Force Shields)"]
+        CookieShield["HttpOnly + SameSite\nSession Cookies (Zero XSS)"]
+        SafeExtractor["Zip-Slip & Symlink Safe Extractor\n(Memory-Bounded Stream)"]
+        PromptQuarantine["Untrusted Code XML Sanitizer\n(Prompt Injection Defense)"]
     end
 
-    subgraph Data ["Persistence & Cloud Integrations"]
-        LocalDB[(server_db.json Local Atomic)]
-        Supabase[(Supabase Cloud PostgreSQL)]
-        Firebase[(Firebase Google Auth)]
-        Gemini[Google Gemini 2.5 Flash / Pro]
+    subgraph CoreEngine ["Projevo AI Core Intelligence"]
+        Orchestrator["Single-Turn Gemini 2.5 Orchestrator"]
+        DiagnosticEngine["Code Quality & Vulnerability Evaluator"]
+        VivaEngine["Socratic Technical Interview Generator"]
+        SkillEngine["Prerequisite Gap Analyzer"]
     end
 
-    UI -->|HttpOnly Cookies| MW
-    MW --> AuthRouter
-    MW --> DoctorRouter
-    MW --> AIRouter
-    
-    AuthUI -->|OAuth Popup| Firebase
-    AuthRouter -->|Upsert & Sync| Supabase
-    AuthRouter -->|Atomic Mutex| LocalDB
-    DoctorRouter -->|Sanitized AST & Code| AIRouter
-    AIRouter -->|Strict Prompt Isolation| Gemini
+    subgraph Persistence ["Hybrid Dual-Storage Tier"]
+        DBGuard{"Production DB Guard"}
+        SupabaseDB[("Supabase Cloud\nPostgreSQL + RLS")]
+        LocalDB[("Local Atomic JSON\n(Mutex-Locked with Corrupted Auto-Backup)")]
+    end
+
+    Client -->|Encrypted HTTPS Requests| SecurityGateway
+    SecurityGateway --> CoreEngine
+    CoreEngine --> DBGuard
+    DBGuard -->|Production Mode| SupabaseDB
+    DBGuard -->|Offline / Test Mode| LocalDB
 ```
+
+---
+
+## 🎯 Core Pillars & Feature Tour
+
+### 🩺 1. Project Doctor — AI Code Diagnostics & Security Audit
+- **Deep Multi-File Analysis**: Drop an entire project `.zip` or individual source files. Project Doctor scans the tree, infers the tech stack automatically, and evaluates architecture.
+- **6-Dimensional Health Scoring**:
+  - 🏗️ **Architecture & Separation of Concerns**
+  - 🧹 **Code Quality & Maintainability**
+  - 🛡️ **Security Vulnerabilities & Secrets Exposure**
+  - 🔒 **Brute-Force & Rate-Limiting Defenses**
+  - ♿ **Accessibility & Web Standards Compliance**
+  - ⚡ **Asynchronous Execution & Performance Traps**
+- **Actionable Remediation**: Every identified defect includes the exact file path, line number, issue explanation, and ready-to-apply diff patch.
+
+### 💡 2. Idea Analyzer & Architectural Blueprinting
+- **Feasibility Assessment**: Evaluates project ideas against real-world technical complexity, scalability, and time constraints.
+- **System Architecture Blueprint**: Generates data models, component hierarchies, recommended technology stacks (frontend, backend, database, deployment), and potential architectural failure modes.
+- **Prerequisite Gap Detection**: Compares project requirements against your declared skills to pinpoint exactly what technologies you need to master before building.
+
+### 🎤 3. Viva & Technical Interview Simulator
+- **Codebase-Grounded Interrogation**: Generates deep conceptual and architectural viva questions tailored specifically to your active project.
+- **Multi-Difficulty Batches**: Drills on algorithmic choices, failure modes, scalability limits, database indexing, and trade-offs between speed and consistency.
+- **Evaluation Criteria & Answer Rubrics**: Provides model answers, expected terminology, and technical justification rubrics to help engineers articulate their technical decisions with confidence.
+
+### 📊 4. Dynamic Skill Matrix & Career Pathways
+- **Self-Calibrating Proficiency Sliders**: Track progress across languages, frameworks, cloud tools, and engineering methodologies.
+- **Personalized Learning Milestones**: Interactive checklists and milestone trackers keep you on target from initial setup to deployment.
+- **Verified GitHub Integration**: Showcases your GitHub profile handle, tracked projects, and academic credentials.
+
+### 🔐 5. Zero-Trust Security & Enterprise Resilience
+- **Strict Row-Level Isolation (Anti-IDOR)**: Enforces total horizontal privilege separation — users can never inspect, modify, or leak each other's project data or diagnostics.
+- **Resilient Email OTP Delivery**: Native 6-digit numeric verification codes sent via Resend custom SMTP — completely eliminating spam redirects and broken sign-in links.
+- **Prompt Injection Quarantine**: Wraps all untrusted student code inside `<untrusted_student_code>` boundary tags with strict adversarial directive blocking.
+- **Zero Secret Leakage**: Sanitized global error handlers ensure stack traces, server paths, and API keys are never leaked to clients.
+
+---
+
+## 🥊 Competitive Matrix
+
+| Capability | Generic LLM Chat (ChatGPT) | GitHub Copilot | LeetCode / HackerRank | **Projevo AI** |
+| :--- | :---: | :---: | :---: | :---: |
+| **Full Project Architecture Feasibility** | ⚠️ Generic advice | ❌ No | ❌ No | **✅ Deep blueprinting & tech stack engine** |
+| **Archive Codebase Audit (`.zip`)** | ❌ Text only | ❌ Editor only | ❌ No | **✅ Multi-file AST & code health scoring** |
+| **Security & Vulnerability Scanning** | ⚠️ Surface level | ⚠️ Basic warnings | ❌ No | **✅ 6-dimension audit with line-by-line diffs** |
+| **Personalized Skill Gap Analysis** | ❌ No | ❌ No | ❌ No | **✅ Direct comparison of skills vs project needs** |
+| **Viva & Architectural Defense Simulator** | ⚠️ Unstructured | ❌ No | ❌ Algorithm only | **✅ Tailored viva defense rubrics & questions** |
+| **Zero-Setup Local & Cloud Dual Mode** | ❌ Cloud only | ❌ Cloud only | ❌ Cloud only | **✅ Local ACID JSON + Supabase Cloud PostgreSQL** |
+| **Prompt Injection Sandboxing** | ❌ Vulnerable | N/A | N/A | **✅ Isolated XML quarantine boundaries** |
 
 ---
 
 ## 🛠 Tech Stack
 
-| Domain | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Frontend** | [React 19](https://react.dev/) | Modern concurrent UI architecture |
-| | [TypeScript 5.8](https://www.typescriptlang.org/) | Strict end-to-end type safety |
-| | [Vite 6.4](https://vitejs.dev/) | Lightning-fast HMR and optimized production bundling |
-| | [Tailwind CSS](https://tailwindcss.com/) | Responsive, utility-first UI styling |
-| | [Lucide React](https://lucide.dev/) | Accessible, consistent iconography |
-| **Backend** | [Node.js 24](https://nodejs.org/) | Modern server-side runtime |
-| | [Express 4.21](https://expressjs.com/) | RESTful API server and routing engine |
-| | [Multer](https://github.com/expressjs/multer) | Safe streaming multipart/form-data upload handling |
-| | [AdmZip](https://github.com/cthackers/adm-zip) | Archive extraction with custom traversal safeguards |
-| | [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Salted password hashing (cost factor 10) |
-| | [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) | Tiered DoS and brute-force mitigation |
-| **AI Engine** | [Google Gemini](https://ai.google.dev/) | Code diagnostics, recommendation generation, viva questions |
-| **Persistence** | [Local Atomic JSON](https://nodejs.org/) | Resilient zero-config local development database |
-| | [Supabase (PostgreSQL)](https://supabase.com/) | Multi-tenant cloud persistence & optional real-time sync |
-| | [Firebase](https://firebase.google.com/) | One-click Google Sign-In authentication |
-| **Quality** | [Vitest 4.1](https://vitest.dev/) | Comprehensive unit, integration, and security test suite |
-| | [Supertest](https://github.com/ladjs/supertest) | HTTP assertion library for endpoint verification |
+### Frontend Architecture
+- **Framework**: [React 19](https://react.dev/) — High-performance concurrent UI with functional components and modern hooks.
+- **Language**: [TypeScript 5.8](https://www.typescriptlang.org/) — Strict end-to-end type safety with shared interfaces.
+- **Build Engine**: [Vite 6.4](https://vitejs.dev/) — Sub-second Hot Module Replacement (HMR) and optimized Rollup tree-shaking.
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) — Clean, utility-first responsive design with accessible color contrast.
+- **Icons**: [Lucide React](https://lucide.dev/) — Crisp, accessible SVG iconography.
+
+### Backend & Cloud Services
+- **Runtime**: [Node.js 24 LTS](https://nodejs.org/) — Fast server-side asynchronous execution.
+- **API Framework**: [Express 4.21](https://expressjs.com/) — RESTful routing engine with centralized error mitigation.
+- **AI Core**: [Google Gemini 2.5 Flash / Pro](https://ai.google.dev/) — Low-latency structured JSON generation and code analysis.
+- **Cloud Database**: [Supabase PostgreSQL](https://supabase.com/) — Managed relational database with connection pooling and RLS.
+- **Local Persistence**: **Atomic Mutex JSON Engine** — Zero-config offline development store with automated corrupted-file recovery.
+- **Email Delivery**: **Resend SMTP Integration** — Reliable transactional delivery for 6-digit verification codes.
+- **Authentication**: **Hybrid Auth Engine** (Supabase Auth + Firebase Google OAuth Popup + Local Bcrypt).
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
 ### 1. Prerequisites
-- **Node.js**: v18.0.0 or later (v20+ / v24 recommended)
-- **npm**: v9.0.0 or later
+- **Node.js**: `v18.0.0` or later (`v20+` or `v24` recommended)
+- **npm**: `v9.0.0` or later
 - **Git**
 
-### 2. Clone Repository
+### 2. Clone & Install
 ```bash
+# Clone the repository
 git clone https://github.com/CMonika67/Projevo-AI.git
 cd Projevo-AI
-```
 
-### 3. Install Dependencies
-```bash
+# Install all dependencies (with pinned security tree)
 npm install
 ```
 
-### 4. Configure Environment Variables
-Copy the template configuration file:
+### 3. Configure Environment Variables
+Copy the example environment configuration:
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and fill in your keys:
+Open `.env` and configure your credentials:
 ```env
-# Gemini AI (Required for diagnostics & mentors)
+# Required: Google Gemini AI API Key
 GEMINI_API_KEY=your_gemini_api_key_here
 APP_URL=http://localhost:3000
 
-# Optional: Supabase Cloud Database
+# Optional: Supabase Cloud Database & Authentication
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Optional: Firebase Authentication (Google Sign-In)
+# Optional: Firebase Authentication (for one-click Google popup)
 VITE_FIREBASE_API_KEY=your-firebase-api-key
-VITE_FIREBASE_AUTH_DOMAIN=your-app.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-app.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_PROJECT_ID=your-firebase-project-id
 ```
 
-### 5. Launch Development Server
+### 4. Run Locally
 ```bash
+# Start backend server & Vite client concurrently on port 3000
 npm run dev
 ```
-> [!NOTE]
-> The server automatically frees orphan processes on port `3000` and serves the Vite client and Express API on `http://localhost:3000`.
+
+Visit **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 ---
 
-## 🧪 Automated Testing
+## 🧪 Automated Testing & Verification
 
-Projevo AI features an automated test suite with **62 test cases** covering functionality, security defenses, authentication mechanisms, and edge cases.
+Projevo AI maintains an exhaustive automated test suite with **175 test cases** across 6 comprehensive suites:
 
 ```bash
-# Run Vitest test suite
+# Run the complete test suite
 npm test
 
 # Run tests in watch mode
 npm run test:watch
 
-# Run TypeScript type check
+# Verify TypeScript type integrity
 npm run lint
+
+# Compile production bundles (Vite + esbuild)
+npm run build
 ```
 
-### Test Coverage Highlights
-- ✅ **Authentication**: Registration, Login, HttpOnly Cookie delivery, Session expiry, Invalidation on logout.
-- ✅ **Password Security**: SHA-256 reset code hashes, single-use enforcement, attempt exhaustion, brute-force rate limiters.
-- ✅ **Project Doctor**: Upload validation, Zip Slip directory traversal defense, oversized file rejection, corrupted zip recovery.
-- ✅ **Prompt Injection**: LLM prompt isolation validation, untrusted tag encapsulation.
-- ✅ **Database Mutex**: High-concurrency race condition prevention, automated corrupted file preservation.
-- ✅ **Information Disclosure**: Verifies stack traces, internal server paths, and API keys are never exposed in error responses.
+### Test Suite Breakdown
+| Suite | Tests | Scope |
+| :--- | :---: | :--- |
+| `server.test.ts` | **67** | Comprehensive regression, password hash storage, rate limits, Zip Slip, diagnostic health. |
+| `db_persistence.test.ts` | **34** | Multi-user isolation, milestone state synchronization, session invalidation, and data integrity. |
+| `auth_and_health_comprehensive.test.ts` | **28** | Supabase OAuth fallback, Magic Link exchange, session renewal, and production health guards. |
+| `new_features.test.ts` | **18** | Profile persistence, clean initial states, project discovery, and milestone tracking. |
+| `e2e_verification.test.ts` | **14** | Complete user lifecycle from registration, diagnostic upload, to interview simulator. |
+| `master_prompt_verification.test.ts` | **14** | End-to-end functional acceptance across all 14 master specification scenarios. |
+| **Total** | **175** | **100% Passing** |
 
 ---
 
-## 🔒 Security Hardening
+## 🔒 Enterprise-Grade Security
 
-| Threat | Mitigation Mechanism | Implementation |
+| Threat Vector | Mitigation Strategy | Technical Implementation |
 | :--- | :--- | :--- |
-| **XSS Token Theft** | Secure Cookies | Sessions use `HttpOnly`, `SameSite: Lax`, and conditionally `Secure` cookies. Zero tokens in `localStorage`. |
-| **Brute Force / DoS** | `express-rate-limit` | Tiered IP limiting on login (5/15m), register (10/h), and reset code requests (3/15m). |
-| **Zip Slip Traversal** | Canonical Path Guard | AdmZip extractor validates each normalized file path against the target directory; rejects symlinks. |
-| **LLM Prompt Injection** | Tagged XML Isolation | Uploaded code is quarantined inside `<untrusted_student_code>` blocks with explicit system boundaries. |
-| **Credential Leakage** | History & Code Sanitization | All API keys are loaded via `.env` (gitignored). Zero hardcoded fallback keys in source files or git history. |
-| **Error Fingerprinting** | Sanitized Handlers | Production error middleware strips system paths, internal stack traces, and database schemas. |
+| **Session Hijacking / XSS** | Secure Cookie Isolation | Sessions use `HttpOnly`, `SameSite: Lax`, and conditionally `Secure` cookies. No JWTs stored in `localStorage`. |
+| **Brute Force & Credential Stuffing** | `express-rate-limit` | Tiered IP limiting on login (5 req/15m), registration (10 req/h), and reset requests (3 req/15m). |
+| **Insecure Direct Object Reference (IDOR)** | User Context Verification | All API operations strictly bind mutations to the authenticated `context.userEmail` / `context.userId`. |
+| **Zip Slip & Path Traversal** | Canonical Boundary Check | ZIP extraction resolves and verifies every entry against the root directory; blocks symlinks and absolute paths. |
+| **Adversarial Prompt Injection** | Tagged XML Quarantine | Student code is encapsulated within `<untrusted_student_code>` blocks with explicit system negative prompts. |
+| **Credential Leakage in Repos** | Environment Pinning | All API keys and secrets load via `.env` (strictly gitignored). Zero hardcoded fallback credentials. |
+| **Information Disclosure** | Masked Error Handlers | Production errors return sanitized messages with all system stack traces and file paths stripped. |
 
 ---
 
@@ -244,61 +263,68 @@ npm run lint
 ```text
 Projevo-AI/
 ├── api/
-│   └── index.ts                 # Vercel serverless function entrypoint
+│   └── index.ts                 # Serverless entrypoint for cloud edge hosting (e.g., Vercel)
 ├── scripts/
-│   └── migrate_to_supabase.ts   # CLI script for local DB to Supabase migration
+│   └── migrate_to_supabase.ts   # Automated CLI tool for migrating local DB to Supabase Cloud
 ├── src/
 │   ├── components/
-│   │   ├── AdaptiveSupportView.tsx   # Contextual hints and step-by-step guidance
-│   │   ├── IdeaAnalyzerModal.tsx     # Feasibility analysis and tech stack recommender
-│   │   ├── InterviewPrepView.tsx     # Technical viva simulator and defense rehearsal
-│   │   ├── LoginView.tsx             # Auth modal (Email/Password + Google OAuth)
-│   │   ├── Navigation.tsx            # Topbar navigation with active status indicators
-│   │   ├── ProfileSettingsView.tsx   # Profile details, skill matrix, and GitHub link
-│   │   ├── ProjectDoctorView.tsx     # Code analysis, health scores, and issue remedies
+│   │   ├── AdaptiveSupportView.tsx   # Contextual problem hints and step-by-step guidance
+│   │   ├── IdeaAnalyzerModal.tsx     # Feasibility assessment, blueprints, and tech recommender
+│   │   ├── InterviewPrepView.tsx     # Code-grounded viva simulator and interview rehearsal
+│   │   ├── LoginView.tsx             # Auth modal (Email/Password, 6-Digit OTP, Google OAuth)
+│   │   ├── Navigation.tsx            # Header navigation with active screen indicators
+│   │   ├── ProfileSettingsView.tsx   # Profile details, skill matrix, and GitHub handle
+│   │   ├── ProjectDoctorView.tsx     # Multi-file code diagnostics and health scoring
 │   │   └── UserAvatar.tsx            # Deterministic initial letter avatar component
-│   ├── api.ts                   # Robust fetch wrapper with credentials and error handling
-│   ├── firebase.ts              # Firebase client SDK initialization & Google OAuth
-│   ├── supabase.ts              # Supabase client and sync persistence helpers
-│   ├── types.ts                 # Shared TypeScript interfaces and domain models
-│   ├── App.tsx                  # Root React application container and state
-│   └── index.css                # Global styles and Tailwind directives
+│   ├── api.ts                   # Type-safe client fetch wrapper with automated credentials
+│   ├── firebase.ts              # Firebase Client SDK for optional Google popup auth
+│   ├── supabase.ts              # Supabase Client SDK and cloud persistence synchronization
+│   ├── types.ts                 # Shared domain data models and TypeScript types
+│   ├── App.tsx                  # Root application controller and global state
+│   └── index.css                # Tailwind CSS styling and global typography
 ├── .env.example                 # Environment configuration template
-├── package.json                 # Project dependencies, scripts, and overrides
-├── server.ts                    # Hardened Express server and Gemini orchestrator
-├── server.test.ts               # 62 automated Vitest test specifications
+├── dbAdapter.ts                 # Unified PostgreSQL and local database abstraction layer
+├── package.json                 # Pinned dependencies, scripts, and build configurations
+├── server.ts                    # Hardened Express API server and Gemini orchestrator
+├── server.test.ts               # Automated security and integration test suite
 ├── supabase_schema.sql          # Cloud PostgreSQL schema, RLS policies, and triggers
 ├── vite.config.ts               # Vite bundler configuration
-└── vitest.config.ts             # Vitest test runner configuration
+└── vitest.config.ts             # Vitest test framework configuration
 ```
 
 ---
 
-## 📦 Building for Production
+## 📦 Production Deployment
 
-To create an optimized production build:
-
+### Building the Distribution Bundle
 ```bash
 npm run build
 ```
+This runs Vite production compilation (`dist/`) and bundles the server into `dist/server.cjs` via `esbuild`.
 
-This compiles:
-1. The Vite client into `dist/` (minified HTML, CSS, and JS chunks).
-2. The Node.js server into `dist/server.cjs` via `esbuild`.
-
-To start the compiled production server:
+### Running Production Server
 ```bash
 NODE_ENV=production node dist/server.cjs
 ```
+
+### Deploying to Vercel
+1. Push the repository to GitHub.
+2. Import the project into the [Vercel Dashboard](https://vercel.com/).
+3. Add your environment variables (`GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, etc.).
+4. Click **Deploy** — the included `api/index.ts` automatically serves the serverless backend.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**. Feel free to use, modify, and distribute it for academic and professional purposes.
+This project is open-source and licensed under the **[MIT License](LICENSE)**. Feel free to use, adapt, and build upon it for academic and professional projects.
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ for engineering students and aspiring software professionals.</sub>
+
+**Built with passion to empower the next generation of software engineers.**
+
+<sub>If you find Projevo AI useful, consider giving this repository a ⭐ on GitHub!</sub>
+
 </div>
