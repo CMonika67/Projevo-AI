@@ -5081,3 +5081,5 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL && !process.env.AWS_L
   startServer();
 }
 
+export default app;
+
