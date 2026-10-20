@@ -1,674 +1,430 @@
 # 🚀 Projevo AI
-### AI-Powered Engineering Project Co-Pilot
+### Your AI-Powered Engineering Project Co-Pilot
 
-**From project idea to implementation, skill development, code analysis, and technical interview preparation.**
+**Discover. Plan. Build. Analyze. Learn. Defend.**
 
-Projevo AI is an AI-assisted platform designed to help students and aspiring developers plan, build, understand, and evaluate software projects. It brings project discovery, idea analysis, skill-gap identification, code diagnostics, and viva or interview preparation into one workspace.
+Projevo AI is an AI-assisted software project development platform designed to help students and aspiring developers transform ideas into well-planned, skill-aligned, and technically understandable projects. It connects project discovery, feasibility analysis, skill-gap identification, code diagnostics, and viva or interview preparation in one unified workspace.
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-Frontend-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-API-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
-[![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+Rather than treating project development as simply writing code, Projevo AI focuses on the complete learning and development journey—from choosing a suitable project to understanding its implementation and confidently explaining its technical decisions.
 
 ---
 
-## 📑 Table of Contents
+## 📑 Contents
 
-- [Overview](#-overview)
-- [Problem Statement](#-problem-statement)
-- [Project Objectives](#-project-objectives)
-- [Key Features](#-key-features)
-- [Application Screenshots](#-application-screenshots)
+- [About Projevo AI](#-about-projevo-ai)
+- [The Problem](#-the-problem)
+- [Our Vision and Objectives](#-our-vision-and-objectives)
+- [Core Features](#-core-features)
+- [How Projevo AI Works](#-how-projevo-ai-works)
 - [System Architecture](#-system-architecture)
-- [Project Workflow](#-project-workflow)
-- [Authentication Workflow](#-authentication-workflow)
+- [Feature Workflow](#-feature-workflow)
 - [Technology Stack](#-technology-stack)
-- [Repository Structure](#-repository-structure)
-- [Getting Started](#-getting-started)
-- [Environment Configuration](#-environment-configuration)
-- [Running the Application](#-running-the-application)
-- [Testing and Build](#-testing-and-build)
-- [Deployment](#-deployment)
-- [Security Considerations](#-security-considerations)
-- [Future Enhancements](#-future-enhancements)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Who Is It For?](#-who-is-it-for)
+- [What Makes Projevo AI Different?](#-what-makes-projevo-ai-different)
+- [Security and Responsible AI](#-security-and-responsible-ai)
+- [Future Scope](#-future-scope)
+- [Project Philosophy](#-project-philosophy)
 
 ---
 
-## 🌟 Overview
+## 🌟 About Projevo AI
 
-Building a software project involves more than writing code. Developers must choose a feasible idea, identify the required skills, design an appropriate architecture, debug implementation issues, and explain their technical decisions.
+Software projects are an important part of technical education and professional growth. However, building a successful project requires more than selecting a programming language or writing a few lines of code. Developers must understand the problem, evaluate the feasibility of a solution, identify the skills they need, choose suitable technologies, improve their implementation, and communicate their decisions effectively.
 
-These activities are often handled using separate tools, making it difficult to maintain a clear view of the entire project journey.
+Projevo AI is designed to bring these activities together.
 
-**Projevo AI aims to connect these stages in a single project-focused workspace.**
+The platform provides an AI-assisted environment where users can explore project ideas, understand project requirements, identify learning gaps, analyze code, and prepare for technical discussions about their work.
 
-It uses AI-assisted analysis to help users understand their project requirements, discover skill gaps, review code, and prepare to explain their work.
+### The central idea
 
-### 🎯 What makes Projevo AI useful?
+**A developer should not only be able to build a project but also understand why it works, what can be improved, and how to explain the decisions behind it.**
 
-- **Project-oriented guidance:** Organize project planning and development activities around the user's selected project.
-- **Personalized skill development:** Compare existing skills with the skills required for a project.
-- **Code understanding:** Analyze submitted code and surface potential issues and improvement opportunities.
-- **Technical preparation:** Practice explaining project architecture, implementation choices, and technical concepts.
-- **Connected workflow:** Move from project discovery to implementation and technical preparation in one application.
+Projevo AI aims to support that complete process through a connected, project-focused experience.
 
-## ❗ Problem Statement
+## ❗ The Problem
 
-Students and early-career developers often face challenges when converting an idea into a working software project.
+Students and aspiring developers frequently encounter several challenges during project development.
 
-Common challenges include:
+### 1. Choosing the right project
 
-- Choosing a project that matches their interests, abilities, and available time.
-- Identifying prerequisite technologies and missing skills.
-- Understanding architectural and implementation issues.
-- Finding practical ways to improve code quality and maintainability.
-- Preparing to explain project decisions during a viva, presentation, or technical interview.
-- Keeping project-related learning and progress organized.
+It can be difficult to find an idea that matches a person's interests, current abilities, academic requirements, and available time. An idea may sound impressive but be too complex to implement with the skills and resources available.
 
-Projevo AI addresses these challenges through an integrated, AI-assisted project development workflow.
+### 2. Understanding project feasibility
 
-## 🎯 Project Objectives
+Before starting development, users need to understand the problem being solved, the proposed solution, the technologies involved, and the potential implementation challenges.
 
-1. Help users explore and evaluate software project ideas.
-2. Identify relevant technologies and prerequisite skills.
-3. Compare existing skills with project requirements.
-4. Assist users in reviewing code and understanding potential issues.
-5. Support viva and technical interview preparation.
-6. Provide a unified interface for project-related activities.
-7. Encourage learning through actionable feedback and iterative improvement.
+### 3. Identifying missing skills
+
+Developers may know some of the technologies required for a project but lack experience in others. Without a clear comparison between current abilities and project requirements, learning can become unfocused.
+
+### 4. Improving code quality
+
+Finding implementation problems, understanding architectural weaknesses, and identifying potential security concerns can be challenging, especially for beginners working on multi-file projects.
+
+### 5. Preparing to explain the project
+
+Academic vivas, project demonstrations, and technical interviews require users to explain their architecture, technologies, implementation choices, limitations, and trade-offs—not merely demonstrate that the application runs.
+
+### 6. Managing the complete development journey
+
+Project planning, skill development, code review, and interview preparation are often performed using separate tools. This can make it harder to connect learning activities with the actual project being developed.
+
+**Projevo AI addresses these challenges by organizing project-related guidance around a connected development and learning workflow.**
 
 ---
 
-## ✨ Key Features
+## 🎯 Our Vision and Objectives
+
+### Vision
+
+To help aspiring developers become more capable, independent, and technically confident builders by connecting project development with structured learning and deeper understanding.
+
+### Objectives
+
+- Help users discover relevant software project ideas.
+- Support early evaluation of project feasibility and technical requirements.
+- Connect project requirements with the skills needed to implement them.
+- Help users identify and prioritize skill gaps.
+- Provide AI-assisted feedback on submitted code.
+- Encourage iterative improvement of project implementations.
+- Support preparation for academic vivas and technical interviews.
+- Make project-related learning and development more organized and understandable.
+
+---
+
+## ✨ Core Features
 
 ### 💡 1. Project Discovery and Idea Analyzer
 
-Explore project possibilities and evaluate an idea before implementation.
+**Turn an initial idea into a more structured project plan.**
 
-**Key capabilities:**
-- Discover ideas across supported domains and difficulty levels.
-- Assess feasibility and technical complexity.
-- Explore suggested technologies and project components.
-- Understand potential implementation challenges.
-- Use generated guidance to plan the next development steps.
+Project Discovery and Idea Analyzer help users explore possible projects and understand what implementing an idea may involve.
 
-### 🩺 2. Project Doctor — Code Analysis
+Key capabilities include:
 
-Project Doctor helps users examine submitted source code and identify areas that may need attention.
+- **Idea exploration:** Discover project possibilities across supported domains and difficulty levels.
+- **Feasibility assessment:** Examine the practical complexity and requirements of an idea.
+- **Technology recommendations:** Explore technologies and tools relevant to the proposed solution.
+- **Architecture planning:** Understand possible components and how they may fit together.
+- **Challenge identification:** Consider potential implementation difficulties before development begins.
+- **Planning support:** Use generated guidance to clarify the project's direction.
 
-**Key capabilities:**
-- Submit supported source files or project archives, where enabled.
-- Review code organization and maintainability.
-- Identify potential implementation and security concerns.
-- Understand reported issues through explanations and recommendations.
-- Use the results to guide debugging and code improvement.
+**Value:** Helps users make more informed project choices before investing significant time in implementation.
 
-> AI-generated diagnostics are advisory. Review suggested changes and test them before applying them to a real project.
+### 🩺 2. Project Doctor — AI-Assisted Code Analysis
+
+**Understand potential problems in your code and identify opportunities to improve it.**
+
+Project Doctor focuses on reviewing submitted source code and providing diagnostic feedback that can help developers understand their implementation.
+
+Key capabilities include:
+
+- **Code inspection:** Analyze supported source files and project archives where the feature is enabled.
+- **Code organization review:** Examine structure and separation of responsibilities.
+- **Maintainability feedback:** Highlight areas that may be difficult to understand or maintain.
+- **Potential issue identification:** Surface possible implementation, performance, and security concerns.
+- **Actionable explanations:** Explain findings and suggest ways to improve the code.
+- **Iterative improvement:** Use feedback to guide debugging and further development.
+
+**Value:** Helps developers move beyond simply finding that something is wrong to understanding what may need attention and why.
+
+AI-generated findings are recommendations, not proof that a project is secure or free from defects. Suggestions should be reviewed and tested.
 
 ### 📊 3. Skill-Gap Analysis
 
-Understand the difference between your current skills and the skills needed for your selected project.
+**Understand what you know, what your project requires, and what you may need to learn next.**
 
-**Key capabilities:**
-- Record skills you already have.
-- Identify skills required by a project.
-- Highlight potential learning gaps.
-- Organize learning priorities around project requirements.
-- Support a more structured approach to learning new technologies.
+Skill-Gap Analysis connects a user's current skills with the requirements of a selected project.
 
-### 🎤 4. Viva and Interview Preparation
+Key capabilities include:
 
-Prepare to explain your project and defend your technical decisions.
+- **Current skill tracking:** Record the technologies and skills a user already has.
+- **Project skill identification:** Determine which skills may be needed for the selected project.
+- **Gap identification:** Highlight differences between existing skills and project requirements.
+- **Learning prioritization:** Help users identify areas that deserve attention.
+- **Project-aligned learning:** Keep skill development connected to a practical implementation goal.
 
-**Key capabilities:**
-- Practice project-related technical questions.
-- Review important concepts and implementation choices.
-- Prepare for questions about architecture, tools, and technologies.
-- Improve the clarity of technical explanations.
-- Use practice sessions to identify topics that need further revision.
+For example, a user planning a machine-learning web application may already know Python but need to learn API development, database integration, model deployment, or frontend fundamentals.
+
+The precise gaps depend on the selected project and the skills recorded by the user.
+
+**Value:** Encourages purposeful learning instead of studying technologies without a clear connection to a practical goal.
+
+### 🎤 4. Viva and Technical Interview Preparation
+
+**Prepare to explain not only what you built, but why you built it that way.**
+
+The interview preparation feature supports practice around project-related concepts and technical decisions.
+
+Key capabilities include:
+
+- **Project-oriented questions:** Practice discussing the selected project's purpose and implementation.
+- **Technical concept revision:** Review relevant programming and system concepts.
+- **Architecture discussions:** Prepare to explain components, data flow, and technology choices.
+- **Decision justification:** Practice discussing why a particular approach was chosen.
+- **Limitations and trade-offs:** Prepare to discuss constraints, weaknesses, and possible improvements.
+- **Learning through practice:** Identify topics that need further understanding or revision.
+
+**Value:** Helps users develop the ability to communicate technical knowledge and explain their own implementation decisions more clearly.
 
 ### 👤 5. Profile and Skill Management
 
-Maintain project-related profile information and organize your current skills.
+**Keep personal skill information connected to project planning.**
 
-**Key capabilities:**
-- Manage profile details.
-- Record and update skills.
-- Support personalized project recommendations based on available profile information.
-- Keep skill information connected to the project-planning workflow.
+Profile and skill management provide a place to maintain relevant user information and track declared skills.
+
+Key capabilities include:
+
+- Managing profile details.
+- Recording and updating current skills.
+- Maintaining information used by personalized workflows, where supported.
+- Connecting user skill information with project requirements.
+
+**Value:** Provides a foundation for more relevant project guidance based on a user's declared experience and learning needs.
 
 ### 🔐 6. Authentication and Data Persistence
 
-The application includes authentication and persistence integrations intended to support user access and application data.
+Projevo AI includes authentication and data-persistence integrations intended to support user access and application information.
 
-Depending on the configured environment, these may include:
-- Supabase and PostgreSQL integration.
+Depending on the active configuration, the project may use:
+
+- Supabase and PostgreSQL for cloud data storage.
 - Firebase integration for Google authentication.
-- Local persistence for development or testing.
-- Email verification workflows, where configured.
+- Local persistence in supported development or testing configurations.
+- Email verification workflows where configured.
 
-The actual authentication and storage behavior depends on the active implementation and environment configuration.
+The exact authentication methods, persistence guarantees, and access controls depend on the implemented configuration.
+
+**Value:** Supports a more organized application experience in which user and project information can be managed through the platform.
 
 ---
 
-## 🖼️ Application Screenshots
+## 🔄 How Projevo AI Works
 
-Screenshots make the project easier to understand during GitHub reviews, academic evaluations, and portfolio visits.
+Projevo AI is organized around the relationship between a user's goals, their current skills, their selected project, and the feedback they receive while developing it.
 
-Add genuine screenshots from your running application to the `screenshots/` directory.
+```mermaid
+flowchart TD
+    A([User Goals and Interests]) --> B[Discover Project Ideas]
+    B --> C[Select a Suitable Project]
+    C --> D[Analyze Feasibility and Requirements]
+    D --> E[Identify Required Skills]
+    E --> F[Compare with Current Skills]
+    F --> G[Identify Learning Gaps]
+    G --> H[Plan and Develop the Project]
+    H --> I[Review Code with Project Doctor]
+    I --> J{Improvements Needed?}
+    J -- Yes --> K[Understand Feedback]
+    K --> H
+    J -- No --> L[Prepare to Explain the Project]
+    L --> M[Practice Viva and Interview Questions]
+    M --> N([Continue Learning and Improving])
+```
 
-### 1. Login and Authentication
+### The development journey
 
-![Projevo AI Login](screenshots/login.png)
+1. **Discover:** Explore possible projects and identify an idea worth pursuing.
+2. **Evaluate:** Understand the problem, feasibility, and technical requirements.
+3. **Prepare:** Identify the skills and technologies required for implementation.
+4. **Learn:** Prioritize the skills that need improvement.
+5. **Build:** Develop and refine the selected project.
+6. **Analyze:** Review code and investigate potential issues.
+7. **Explain:** Practice communicating the project's design and implementation decisions.
+8. **Improve:** Use feedback to guide the next iteration.
 
-*Authentication interface for accessing Projevo AI.*
-
-### 2. Main Dashboard
-
-![Projevo AI Dashboard](screenshots/dashboard.png)
-
-*The workspace for accessing project-related features.*
-
-### 3. Project Discovery and Idea Analyzer
-
-![Project Discovery and Idea Analyzer](screenshots/idea-analyzer.png)
-
-*Explore project ideas and examine their feasibility.*
-
-### 4. Project Doctor
-
-![Project Doctor Code Analysis](screenshots/project-doctor.png)
-
-*Review submitted code and inspect diagnostic feedback.*
-
-### 5. Skill-Gap Analysis
-
-![Skill Gap Analysis](screenshots/skill-gap.png)
-
-*Compare current skills with the skills required by a project.*
-
-### 6. Interview Preparation
-
-![Interview Preparation](screenshots/interview-preparation.png)
-
-*Practice explaining technical concepts and project decisions.*
-
-> **Important:** These paths are placeholders. Add the actual image files with the exact filenames shown above, or update the paths to match your screenshots. GitHub will not display an image that has not been added to the repository.
+This workflow describes the platform's intended project-development journey; individual steps depend on the features available in the current implementation.
 
 ---
 
 ## 🏗️ System Architecture
 
-The following diagram illustrates the intended high-level architecture of Projevo AI. The exact request paths and enabled services should match the current code and deployment configuration.
+The following diagram illustrates a high-level conceptual architecture for Projevo AI, showing how its interface, backend, AI integration, authentication, and data services may interact.
 
 ```mermaid
 flowchart TB
-    U([User])
+    USER([User])
 
-    subgraph Frontend["Frontend Layer"]
-        UI["React + TypeScript"]
-        VITE["Vite Development and Build"]
-        FEATURES["Project Discovery<br/>Idea Analyzer<br/>Project Doctor<br/>Skill-Gap Analysis<br/>Interview Preparation"]
+    subgraph PRESENTATION["Presentation Layer"]
+        FRONTEND["React + TypeScript Interface"]
+        PROJECT["Project Discovery and Idea Analyzer"]
+        SKILLS["Skill-Gap Analysis"]
+        DOCTOR["Project Doctor"]
+        INTERVIEW["Viva and Interview Preparation"]
     end
 
-    subgraph Backend["Backend Layer"]
+    subgraph APPLICATION["Application Layer"]
         API["Node.js + Express API"]
-        VALIDATION["Request Validation<br/>Error Handling"]
-        AI["Gemini AI Integration"]
-        DATA["Data Access Layer"]
+        VALIDATION["Request Processing and Validation"]
+        ORCHESTRATION["Feature and AI Request Coordination"]
+        DATAACCESS["Data Access Layer"]
     end
 
-    subgraph Services["External Services and Storage"]
+    subgraph SERVICES["External Services and Persistence"]
         GEMINI["Google Gemini API"]
-        SUPABASE[("Supabase / PostgreSQL")]
-        LOCAL[("Local Persistence<br/>If Configured")]
-        AUTH["Configured Authentication Provider"]
+        AUTH["Configured Authentication Service"]
+        DATABASE[("Supabase / PostgreSQL")]
+        LOCAL[("Local Persistence, if enabled")]
     end
 
-    U --> UI
-    VITE --> UI
-    UI --> FEATURES
-    FEATURES --> API
+    USER --> FRONTEND
+    FRONTEND --> PROJECT
+    FRONTEND --> SKILLS
+    FRONTEND --> DOCTOR
+    FRONTEND --> INTERVIEW
+
+    PROJECT --> API
+    SKILLS --> API
+    DOCTOR --> API
+    INTERVIEW --> API
+
     API --> VALIDATION
-    VALIDATION --> AI
-    VALIDATION --> DATA
-    AI --> GEMINI
-    DATA --> SUPABASE
-    DATA --> LOCAL
-    UI --> AUTH
+    VALIDATION --> ORCHESTRATION
+    VALIDATION --> DATAACCESS
+
+    ORCHESTRATION --> GEMINI
+    FRONTEND --> AUTH
+    DATAACCESS --> DATABASE
+    DATAACCESS --> LOCAL
 ```
 
-### Architecture overview
+### Architecture layers
 
-| Layer | Responsibility |
+| Layer | Role |
 |---|---|
-| Frontend | Displays the user interface and handles user interactions. |
-| API layer | Receives application requests and coordinates backend operations. |
-| AI integration | Sends supported analysis requests to the configured Gemini service. |
-| Data access | Coordinates application data operations with the configured storage system. |
-| Authentication | Supports the authentication provider enabled for the environment. |
+| Presentation layer | Provides the interface through which users interact with project features. |
+| Application layer | Coordinates API requests and application operations. |
+| AI integration | Connects supported features to the configured Gemini service. |
+| Authentication | Handles user access through the configured authentication provider. |
+| Data access | Coordinates data operations with the configured persistence layer. |
 
-**Architecture principle:** Keep user-interface logic, backend processing, AI integration, and data access organized into separate responsibilities wherever practical.
-
----
-
-## 🔄 Project Workflow
-
-The following flowchart describes the intended user journey through the application.
-
-```mermaid
-flowchart TD
-    A([Start]) --> B[Open Projevo AI]
-    B --> C[Access the Workspace]
-    C --> D[Explore Project Ideas]
-    D --> E[Select a Project]
-    E --> F[Review Feasibility and Requirements]
-    F --> G[Identify Required Skills]
-    G --> H[Compare Current Skills]
-    H --> I[Plan Learning and Implementation]
-    I --> J[Build or Improve the Project]
-    J --> K[Review Code with Project Doctor]
-    K --> L{Issues or Gaps Remain?}
-    L -- Yes --> M[Understand Feedback and Improve]
-    M --> J
-    L -- No --> N[Prepare for Viva or Interview]
-    N --> O[Review and Explain Technical Decisions]
-    O --> P([Continue Learning and Development])
-```
-
-### Workflow explanation
-
-1. **Explore:** Discover possible projects and select a suitable idea.
-2. **Evaluate:** Understand the project's feasibility and technical requirements.
-3. **Prepare:** Identify the skills needed before or during implementation.
-4. **Build:** Develop the project and work through implementation challenges.
-5. **Review:** Use code-analysis feedback to identify potential improvements.
-6. **Prepare to present:** Practice explaining the project and its technical decisions.
-
-This is a conceptual workflow; the features available at each step depend on the current application implementation.
+The diagram is a conceptual representation rather than a verified runtime trace. The actual service connections should be confirmed against the project's implementation.
 
 ---
 
-## 🔑 Authentication Workflow
+## 🧠 What Makes Projevo AI Different?
 
-```mermaid
-flowchart TD
-    A([Open Application]) --> B[Open Authentication Screen]
-    B --> C{Choose Available Method}
-    C --> D[Email and Password]
-    C --> E[Email Verification or OTP]
-    C --> F[Google Sign-In]
-    D --> G[Configured Authentication Service]
-    E --> G
-    F --> G
-    G --> H{Authentication Successful?}
-    H -- Yes --> I[Open Authorized Workspace]
-    H -- No --> J[Show Error or Retry]
-    J --> B
-```
+Projevo AI is designed around **project-centered learning** rather than treating each development task as an unrelated activity.
 
-The diagram represents a conceptual flow. Email verification, OTP, Google sign-in, and session behavior must be confirmed against the authentication methods actually configured in your application.
+| Development need | Projevo AI's intended contribution |
+|---|---|
+| Choosing a project | Helps users explore and evaluate project ideas. |
+| Understanding requirements | Organizes feasibility and technology considerations. |
+| Identifying skill gaps | Connects current skills with project requirements. |
+| Improving implementation | Provides AI-assisted code diagnostics and recommendations. |
+| Preparing for a viva | Supports practice around project-specific technical concepts. |
+| Connecting learning to practice | Organizes these activities around a selected project. |
+
+### The core distinction
+
+Many development activities can be performed with individual tools. Projevo AI's focus is on bringing these activities into a connected workflow where project planning, skill development, code understanding, and technical preparation reinforce one another.
+
+This is the platform's design goal, rather than a claim that other tools cannot provide similar capabilities.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Technology | Purpose |
+The project documentation identifies the following technologies as part of the Projevo AI stack. The exact versions and active integrations depend on the current repository configuration.
+
+| Technology | Role in the project |
 |---|---|
-| React | Component-based frontend development |
-| TypeScript | Type-safe application development |
-| Vite | Development server and frontend build tooling |
-| Tailwind CSS | Utility-based interface styling, if configured |
-| Lucide React | Interface icons |
-| Node.js | JavaScript runtime for the backend |
-| Express | Backend API and routing |
-| Google Gemini API | AI-assisted project and code analysis |
-| Supabase | Cloud database and related services, if configured |
-| PostgreSQL | Relational data storage through Supabase |
-| Firebase | Google authentication integration, if configured |
-| Vitest | Automated testing, if configured |
-
-Refer to `package.json` and the environment configuration for the exact installed versions and available scripts.
+| React | Building the user interface from reusable components. |
+| TypeScript | Providing typed application code and shared data models. |
+| Vite | Supporting frontend development and production builds. |
+| Tailwind CSS | Utility-based styling, where configured. |
+| Lucide React | Providing interface icons. |
+| Node.js | Backend JavaScript runtime. |
+| Express | API routing and backend request handling. |
+| Google Gemini API | AI-assisted analysis and generated guidance. |
+| Supabase | Cloud data and related services, where configured. |
+| PostgreSQL | Relational database used through Supabase. |
+| Firebase | Google authentication integration, where configured. |
 
 ---
 
-## 📂 Repository Structure
+## 👥 Who Is Projevo AI For?
 
-The following structure reflects the main files described in the project documentation. Your actual repository may contain additional files or different paths.
+### Students and academic project teams
 
-```text
-Projevo-AI/
-├── api/
-│   └── index.ts
-├── scripts/
-│   └── migrate_to_supabase.ts
-├── src/
-│   ├── components/
-│   │   ├── AdaptiveSupportView.tsx
-│   │   ├── IdeaAnalyzerModal.tsx
-│   │   ├── InterviewPrepView.tsx
-│   │   ├── LoginView.tsx
-│   │   ├── Navigation.tsx
-│   │   ├── ProfileSettingsView.tsx
-│   │   ├── ProjectDoctorView.tsx
-│   │   └── UserAvatar.tsx
-│   ├── api.ts
-│   ├── firebase.ts
-│   ├── supabase.ts
-│   ├── types.ts
-│   ├── App.tsx
-│   └── index.css
-├── screenshots/
-│   ├── login.png
-│   ├── dashboard.png
-│   ├── idea-analyzer.png
-│   ├── project-doctor.png
-│   ├── skill-gap.png
-│   └── interview-preparation.png
-├── .env.example
-├── dbAdapter.ts
-├── package.json
-├── server.ts
-├── server.test.ts
-├── supabase_schema.sql
-├── vite.config.ts
-└── vitest.config.ts
-```
+Explore project ideas, understand requirements, identify skill gaps, and prepare to explain project work during academic reviews.
 
-### Important files
+### Beginner developers
 
-- `src/App.tsx` — Main frontend application component.
-- `src/components/` — Feature-specific user-interface components.
-- `src/api.ts` — Frontend API communication.
-- `src/types.ts` — Shared TypeScript types.
-- `server.ts` — Express backend entry point.
-- `dbAdapter.ts` — Database access and persistence abstraction.
-- `supabase_schema.sql` — Database schema, if used by the current setup.
-- `api/index.ts` — Potential serverless entry point; deployment behavior depends on its implementation and hosting configuration.
-- `package.json` — Dependencies and available project scripts.
-- `server.test.ts` — Backend tests.
+Connect learning goals to practical implementation and use diagnostic feedback to understand potential code improvements.
+
+### Aspiring data scientists and AI developers
+
+Organize project planning and learning around the technologies and skills required for AI-related projects.
+
+### Final-year project teams
+
+Use project-focused guidance to think through feasibility, implementation choices, code quality, and technical presentation.
+
+### Technical interview candidates
+
+Practice explaining project architecture, technologies, implementation choices, limitations, and trade-offs.
 
 ---
 
-## 🚀 Getting Started
+## 🔒 Security and Responsible AI
 
-Follow these steps to run Projevo AI locally.
+Projevo AI combines application functionality with AI-assisted analysis. Responsible implementation requires attention to both software security and the limitations of generated output.
 
-### Prerequisites
+Important considerations include:
 
-Install the following:
+- **Credential protection:** Keep private API keys and privileged credentials out of public repositories and browser-accessible code.
+- **Authentication and authorization:** Verify user identity and enforce access permissions on protected backend operations.
+- **Data isolation:** Ensure that user-specific information is accessed only by authorized users.
+- **Safe file handling:** Validate uploaded content and handle unexpected or potentially malicious files carefully.
+- **AI output validation:** Treat generated content as untrusted until it has been checked.
+- **Human review:** Review proposed code changes and test them before adopting them.
+- **Data transparency:** Explain how user information is stored and processed as the application evolves.
 
-- [Node.js](https://nodejs.org/)
-- npm, which is included with Node.js
-- [Git](https://git-scm.com/)
-- A Google Gemini API key for AI features
-- Credentials for any optional cloud services you intend to use
-
-Check your installed versions:
-
-```bash
-node --version
-npm --version
-git --version
-```
-
-Use a Node.js version compatible with the project's dependencies and deployment environment. Check `package.json` and any `engines` field for the supported version.
-
-### Step 1: Clone the repository
-
-```bash
-git clone https://github.com/CMonika67/Projevo-AI.git
-cd Projevo-AI
-```
-
-### Step 2: Install dependencies
-
-```bash
-npm install
-```
-
-### Step 3: Configure environment variables
-
-Create your local environment file by copying the example file.
-
-On macOS/Linux:
-
-```bash
-cp .env.example .env
-```
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-If `.env.example` does not exist, create `.env` using the variable names required by the current application code. Do not commit your actual `.env` file.
-
-### Step 4: Add the required configuration
-
-Open `.env` and configure the variables required by your application. The following are examples of variables documented for this project; the exact names must match the code.
-
-```env
-# AI service
-GEMINI_API_KEY=your_gemini_api_key
-
-# Application URL
-APP_URL=http://localhost:3000
-
-# Supabase - if cloud database features are enabled
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-
-# Browser-side Supabase configuration, if required
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
-
-# Firebase Google authentication - if enabled
-VITE_FIREBASE_API_KEY=your-firebase-api-key
-VITE_FIREBASE_PROJECT_ID=your-firebase-project-id
-```
-
-Some deployments may require additional variables, such as a service-role key, email-provider credentials, or server-side authentication settings.
-
-**Configuration notes:**
-
-- Never commit API keys, passwords, service-role keys, or other secrets.
-- Keep privileged credentials on the server and never expose them through browser-side variables.
-- Only add optional service configuration if the application actually uses that service.
-- Verify environment-variable names against `server.ts`, `src/`, `.env.example`, and the deployment settings.
-- A configured API key does not, by itself, guarantee that every feature is operational.
-
-### Step 5: Start the application
-
-```bash
-npm run dev
-```
-
-If the development command starts both the frontend and backend, open the local URL shown in your terminal. If it uses a different port, follow the terminal output rather than assuming a fixed URL.
-
-Open the application in your browser and verify that the required backend and AI services are available.
+AI-assisted analysis can help identify potential issues, but it does not guarantee correctness, security, or completeness. Actual protections should be evaluated against the implemented system.
 
 ---
 
-## 🧪 Testing and Build
+## 🔮 Future Scope
 
-Use the scripts defined in `package.json`.
+Projevo AI can evolve into a more comprehensive environment for project-centered learning and development.
 
-### Run automated tests
+Potential future enhancements include:
 
-```bash
-npm test
-```
+### 1. Personalized Learning Roadmaps
+Create structured learning paths based on project requirements and identified skill gaps.
 
-### Run tests in watch mode
+### 2. Project Progress Tracking
+Connect project milestones, learning tasks, and implementation progress in one workspace.
 
-```bash
-npm run test:watch
-```
+### 3. Deeper Code Intelligence
+Improve diagnostic explanations, code-context understanding, and traceability between findings and source locations.
 
-### Run the lint or type-check script
+### 4. Project Documentation Assistance
+Help users organize architecture descriptions, design decisions, and project documentation.
 
-```bash
-npm run lint
-```
+### 5. Expanded Interview Practice
+Introduce more structured practice sessions, topic-based evaluation, and feedback on technical explanations.
 
-### Build for production
+### 6. Project Quality Insights
+Bring relevant code-quality, testing, and maintainability information into a more unified review experience.
 
-```bash
-npm run build
-```
+### 7. Enhanced Personalization
+Refine project suggestions using declared skills, interests, goals, and learning progress.
 
-Not every repository defines all four scripts. If a command is unavailable, inspect the `scripts` section of `package.json` and use the script actually provided.
-
-### Recommended verification checklist
-
-Before publishing a release, verify:
-
-- [ ] The application starts without compilation errors.
-- [ ] Login and logout work with the configured authentication provider.
-- [ ] Profile and skill changes persist after refreshing the page.
-- [ ] Project discovery displays the expected results.
-- [ ] Skill-gap analysis returns meaningful output.
-- [ ] Project Doctor handles supported files and invalid uploads appropriately.
-- [ ] Interview preparation produces the expected results.
-- [ ] Backend requests handle invalid input and service failures.
-- [ ] The production build completes successfully.
-- [ ] The deployed application uses the correct environment variables.
-
-Only publish a test count or “all tests passing” badge after running the current test suite successfully. Test results can change as the code changes.
+These are potential areas for future development, not assertions that the features are already implemented.
 
 ---
 
-## ☁️ Deployment
+## 💙 Project Philosophy
 
-Projevo AI can be deployed using a hosting platform compatible with its frontend and backend architecture.
+Projevo AI is built around a simple idea:
 
-### General deployment workflow
+**Building a project is only one part of becoming an engineer. Understanding the problem, learning what is needed, improving the solution, and explaining technical decisions are equally important.**
 
-```mermaid
-flowchart TD
-    A[Local Development] --> B[Run Tests and Build]
-    B --> C{Checks Successful?}
-    C -- No --> D[Fix Issues]
-    D --> B
-    C -- Yes --> E[Push Changes to GitHub]
-    E --> F[Configure Hosting Platform]
-    F --> G[Set Environment Variables]
-    G --> H[Deploy Frontend and Backend]
-    H --> I[Verify API and AI Integration]
-    I --> J{Application Works?}
-    J -- No --> K[Inspect Logs and Configuration]
-    K --> F
-    J -- Yes --> L[Release]
-```
+By connecting these activities, Projevo AI aims to make project development a more structured, understandable, and learning-oriented experience.
 
-### Deployment checklist
-
-1. Push the verified project code to GitHub.
-2. Connect the repository to your selected hosting platform.
-3. Configure the build command and output directory for the frontend.
-4. Configure the backend entry point and supported runtime.
-5. Add the required environment variables in the hosting dashboard.
-6. Configure the database schema and authentication settings if required.
-7. Set the correct application URL and authentication redirect URLs.
-8. Deploy the application and inspect the deployment logs.
-9. Test the deployed frontend, backend APIs, persistence, and AI features.
-
-### Vercel deployment considerations
-
-If deploying to Vercel, verify that the backend entry point is compatible with Vercel's serverless execution model. A conventional long-running Express server and a serverless function may require different configuration.
-
-Also verify that:
-
-- The build succeeds in the deployment environment.
-- All required environment variables are configured for the correct deployment environments.
-- Database connectivity works from the deployed backend.
-- Persistent local filesystem storage is not relied upon for durable user data in a serverless environment.
-- Authentication callback URLs and allowed domains match the deployed application.
-
-A successful deployment build does not necessarily prove that all runtime features are working. Test the deployed application itself.
+The goal is not simply to help users produce more code. It is to help them become more capable of planning, building, evaluating, and confidently explaining the software they create.
 
 ---
 
-## 🔒 Security Considerations
-
-Security is an ongoing engineering responsibility. Projevo AI should be evaluated against the following areas as its implementation evolves.
-
-| Area | Recommended practice |
-|---|---|
-| API keys and secrets | Store secrets in environment variables or an appropriate secret manager. |
-| Authentication | Validate sessions and enforce authorization on the backend. |
-| User data isolation | Apply ownership checks to every user-specific read and write. |
-| Database access | Use least-privilege credentials and appropriate Row-Level Security policies where applicable. |
-| File uploads | Validate file types and sizes; safely handle archive paths and unexpected content. |
-| AI-generated output | Treat model responses as untrusted input and validate structured results before use. |
-| Error handling | Avoid returning secrets, stack traces, or internal infrastructure details to clients. |
-| Rate limiting | Apply appropriate limits to sensitive endpoints and resource-intensive operations. |
-| Dependency management | Keep dependencies updated and review known vulnerabilities. |
-| Production configuration | Separate development and production credentials and settings. |
-
-**Security note:** AI-assisted code review is not a substitute for dedicated security testing. Do not describe the application as vulnerability-free or fully secure without appropriate evidence and independent verification.
-
----
-
-## 🔮 Future Enhancements
-
-Potential improvements for future versions include:
-
-- **Project progress tracking:** Track milestones and implementation progress for a selected project.
-- **Improved project recommendations:** Refine recommendations using user interests, current skills, and project requirements.
-- **Learning roadmaps:** Generate structured learning plans for identified skill gaps.
-- **Richer diagnostics:** Improve code-analysis explanations and connect recommendations to specific source locations where supported.
-- **Project documentation generation:** Help users organize architecture notes, implementation decisions, and project documentation.
-- **Enhanced viva preparation:** Offer topic-based practice sessions and structured feedback.
-- **Testing and quality reports:** Present test results and code-quality findings in a unified view.
-- **Deployment guidance:** Help users identify configuration issues before deploying their projects.
-
-These are potential future enhancements, not claims about currently implemented functionality.
-
----
-
-## 🤝 Contributing
-
-Contributions, suggestions, and bug reports are welcome.
-
-To contribute:
-
-1. Fork the repository.
-2. Create a branch for your change.
-3. Make your changes and add or update tests where appropriate.
-4. Run the available test and build commands.
-5. Commit your changes with a clear message.
-6. Open a pull request describing the changes and any relevant testing.
-
-For bugs, include steps to reproduce the issue, expected behavior, actual behavior, and relevant sanitized logs. Do not include API keys, passwords, or personal data.
-
----
-
-## 📄 License
-
-The project license should match the license file included in the repository.
-
-If the repository contains an MIT `LICENSE` file, this section can read:
-
-This project is licensed under the [MIT License](LICENSE).
-
-If no license file exists, add the appropriate license before claiming that the project is MIT-licensed.
-
----
-
-## 💙 Built for Student Developers
-
-Projevo AI brings project planning, skill development, code analysis, and technical preparation together in one AI-assisted workspace.
-
-**The goal is simple: help developers move from having an idea to understanding, building, improving, and confidently explaining their projects.**
-
-If you find Projevo AI useful, consider starring the repository on GitHub.
-
-**Repository:** [CMonika67/Projevo-AI](https://github.com/CMonika67/Projevo-AI)
+**Projevo AI — From ideas to implementation, and from implementation to understanding.**
