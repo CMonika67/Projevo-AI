@@ -35,11 +35,31 @@ export const currentProject: ProjectData = {
 export const defaultHealthCategories: HealthCategory[] = [
   { name: "Code Quality", score: 86, status: "good", icon: "code", note: "Clean functions and clear separation of concerns" },
   { name: "Security", score: 72, status: "needs-attention", icon: "security", note: "Missing rate-limiting on sensitive auth endpoint" },
-  { name: "Brute-Force", score: 60, status: "critical", icon: "shield_off", note: "No exponential backoff on auth failure loop" },
+  { name: "Brute-Force", score: 60, status: "critical", icon: "gpp_bad", note: "No exponential backoff on auth failure loop" },
   { name: "Accessibility", score: 78, status: "needs-attention", icon: "accessibility_new", note: "Color contrast and aria tags need review" },
   { name: "Performance", score: 88, status: "good", icon: "speed", note: "Optimized tensor vectorization and indexing" },
   { name: "Google Services", score: 80, status: "good", icon: "cloud_done", note: "Valid cloud credentials and lazy init" },
 ];
+
+export const emptyProfile: UserProfile = {
+  name: "New Student",
+  role: "Engineering Student",
+  membership: "Projevo AI Member",
+  avatar: MONIKA_AVATAR,
+  email: "",
+  college: "",
+  university: "",
+  course: "",
+  yearOfStudy: "",
+  graduationYear: "",
+  skills: [],
+  selectedInterests: [],
+  interestedRoles: [],
+  learningPreferences: "",
+  onboardingGoals: "",
+  github: "",
+  customSkills: []
+};
 
 export const defaultCriticalIssues: CriticalIssue[] = [
   {

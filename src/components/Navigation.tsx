@@ -55,7 +55,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     { id: 'discovery' as ScreenType, label: 'Project Discovery', icon: 'explore' },
     { id: 'doctor' as ScreenType, label: 'Project Doctor', icon: 'medical_services' },
     { id: 'health-report' as ScreenType, label: 'Health Report', icon: 'monitor_heart' },
-    { id: 'adaptive-support' as ScreenType, label: 'Adaptive Support', icon: 'support_agent' },
+    { id: 'skill-gap' as ScreenType, label: 'Skill Gap Analysis', icon: 'insights' },
     { id: 'interview-prep' as ScreenType, label: 'Interview Prep', icon: 'school' },
     { id: 'onboarding' as ScreenType, label: 'Onboarding (Topics)', icon: 'auto_awesome' },
     { id: 'profile' as ScreenType, label: 'Profile & Settings', icon: 'person' },

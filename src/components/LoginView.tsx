@@ -5,12 +5,25 @@ import { safeApiFetch } from '../api';
 interface LoginViewProps {
   onLoginSuccess: (email: string, token: string, userProfile?: any, userProject?: any) => void;
   onNavigate?: (screen: ScreenType) => void;
+  initialMode?: AuthMode;
+  initialRecoveryToken?: string | null;
 }
 
-type AuthMode = 'login' | 'register' | 'forgot-email' | 'forgot-code' | 'forgot-reset';
+export type AuthMode =
+  | 'choice'
+  | 'email-password'
+  | 'email-otp'
+  | 'register'
+  | 'forgot-email'
+  | 'forgot-code'
+  | 'forgot-reset';
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  const [mode, setMode] = useState<AuthMode>('login');
+export const LoginView: React.FC<LoginViewProps> = ({
+  onLoginSuccess,
+  initialMode = 'choice',
+  initialRecoveryToken = null
+}) => {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
 
   // Form states
   const [fullName, setFullName] = useState('');
@@ -19,7 +32,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
-  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetToken, setResetToken] = useState<string | null>(initialRecoveryToken);
+
+  // Email OTP login states
+  const [loginOtpCode, setLoginOtpCode] = useState('');
+  const [loginOtpSent, setLoginOtpSent] = useState(false);
+  const [isSendingLoginOtp, setIsSendingLoginOtp] = useState(false);
+  const [isVerifyingLoginOtp, setIsVerifyingLoginOtp] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
   // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
@@ -27,10 +47,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   // Status states
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Load remembered email and check for password reset links in URL on mount
+  // OTP cooldown timer effect
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setOtpCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [otpCooldown]);
+
+  // Load remembered email and check for password reset links or OAuth errors in URL on mount
   useEffect(() => {
     const savedEmail = localStorage.getItem('projevo_remembered_email');
     if (savedEmail) {
@@ -43,35 +74,94 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       const urlToken = params.get('resetToken') || params.get('token');
       const urlEmail = params.get('email');
       const urlCode = params.get('code');
+      const urlError = params.get('error_description') || params.get('error');
+
+      // Check hash fragment for Supabase recovery link or OAuth parameters
+      let hashError: string | null = null;
+      let hashToken: string | null = null;
+      let hashType: string | null = null;
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        hashError = hashParams.get('error_description') || hashParams.get('error');
+        hashToken = hashParams.get('access_token');
+        hashType = hashParams.get('type');
+      }
+
+      if (urlError || hashError) {
+        setError(decodeURIComponent(urlError || hashError || 'Authentication failed. Please try again.'));
+      }
 
       if (urlEmail) {
         setEmail(urlEmail);
       }
 
-      if (urlToken && urlEmail) {
-        setResetToken(urlToken);
+      // Supabase recovery link detection (#access_token=...&type=recovery or ?token=...&type=recovery)
+      if ((hashType === 'recovery' && hashToken) || (urlToken && (urlEmail || hashType === 'recovery'))) {
+        const activeToken = hashToken || urlToken;
+        setResetToken(activeToken);
         setMode('forgot-reset');
       } else if (urlCode && urlEmail) {
         setVerificationCode(urlCode);
         setMode('forgot-code');
+      } else if (initialRecoveryToken) {
+        setResetToken(initialRecoveryToken);
+        setMode('forgot-reset');
       }
     } catch (e) {
       // Ignore URL parsing errors
     }
-  }, []);
+  }, [initialRecoveryToken]);
+
+  const handleResendConfirmation = async () => {
+    if (!email.trim() || isResending) return;
+    setIsResending(true);
+    try {
+      const data = await safeApiFetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), type: 'signup' })
+      });
+      setSuccessMessage(data.message || 'Confirmation email resent! Please check your inbox.');
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend confirmation email.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (isLoading || isGoogleLoading) return;
+    setIsGoogleLoading(true);
+    setError(null);
+    try {
+      const redirectUri = window.location.origin + '/login';
+      const data = await safeApiFetch(`/api/auth/google/url?redirectTo=${encodeURIComponent(redirectUri)}`);
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Google sign-in is not currently available.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to initialize Google sign-in. Please try again.');
+      setIsGoogleLoading(false);
+    }
+  };
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setError(null);
     setShowPassword(false);
     setShowConfirmPassword(false);
-    if (newMode !== 'login') {
+    if (newMode !== 'email-password' && newMode !== 'email-otp') {
       setSuccessMessage(null);
     }
-    if (newMode === 'login' || newMode === 'register' || newMode === 'forgot-email') {
+    if (newMode === 'choice' || newMode === 'email-password' || newMode === 'register' || newMode === 'forgot-email') {
       setPassword('');
       setConfirmPassword('');
       setVerificationCode('');
+      setLoginOtpCode('');
+      setLoginOtpSent(false);
     }
   };
 
@@ -91,7 +181,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const pwdStrength = getPasswordStrength(password);
 
-  // --- 1. LOGIN HANDLER ---
+  // --- 1. EMAIL + PASSWORD LOGIN HANDLER ---
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
@@ -101,22 +191,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
-    setSuccessMessage(null);
 
     try {
       const data = await safeApiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: email.trim(), password, rememberMe })
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          rememberMe
+        })
       });
 
       if (rememberMe) {
@@ -127,26 +213,90 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
       onLoginSuccess(data.email, data.token, data.profile, data.project);
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Invalid email or password.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 2. REGISTRATION HANDLER ---
+  // --- 2. EMAIL OTP LOGIN: SEND CODE ---
+  const handleSendLoginOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!email.trim()) {
+      setError('Please enter your email address to receive a sign-in code.');
+      return;
+    }
+    if (otpCooldown > 0 || isSendingLoginOtp) return;
+
+    setIsSendingLoginOtp(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const data = await safeApiFetch('/api/auth/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() })
+      });
+      setLoginOtpSent(true);
+      setOtpCooldown(60);
+      setSuccessMessage(data.message || 'A 6-digit verification code has been sent to your email.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send login code. Please try again.');
+    } finally {
+      setIsSendingLoginOtp(false);
+    }
+  };
+
+  // --- 3. EMAIL OTP LOGIN: VERIFY CODE ---
+  const handleVerifyLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginOtpCode.trim()) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
+    if (isVerifyingLoginOtp) return;
+
+    setIsVerifyingLoginOtp(true);
+    setError(null);
+
+    try {
+      const data = await safeApiFetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          code: loginOtpCode.trim(),
+          rememberMe
+        })
+      });
+
+      if (rememberMe) {
+        localStorage.setItem('projevo_remembered_email', email.trim());
+      } else {
+        localStorage.removeItem('projevo_remembered_email');
+      }
+
+      onLoginSuccess(data.email, data.token, data.profile, data.project);
+    } catch (err: any) {
+      setError(err.message || 'Invalid or expired verification code.');
+    } finally {
+      setIsVerifyingLoginOtp(false);
+    }
+  };
+
+  // --- 4. REGISTRATION HANDLER ---
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
-    setError(null);
 
     if (!fullName.trim()) {
       setError('Please enter your full name.');
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email.trim())) {
-      setError('Please provide a valid email address.');
+    if (!email.trim()) {
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -155,17 +305,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-      setError('Password must contain at least one letter and one number.');
-      return;
-    }
-
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter your password.');
+      setError('Passwords do not match.');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
 
     try {
       const data = await safeApiFetch('/api/auth/register', {
@@ -179,20 +325,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         })
       });
 
-      // Successful registration: Redirect user to Login with success message
-      setSuccessMessage(data.message || 'Account created successfully. Please log in.');
-      setPassword('');
-      setConfirmPassword('');
-      setMode('login');
+      if (data.needsEmailConfirmation) {
+        setSuccessMessage('Account created! Please check your inbox and confirm your email before signing in.');
+        setMode('email-password');
+        return;
+      }
+
+      if (data.token) {
+        onLoginSuccess(data.email, data.token, data.profile, data.project);
+      } else {
+        setSuccessMessage('Account created successfully! Please sign in.');
+        setMode('email-password');
+      }
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Registration failed.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 3. FORGOT PASSWORD STEP 1: REQUEST CODE ---
-  const handleRequestCode = async (e: React.FormEvent) => {
+  // --- 5. FORGOT PASSWORD STEP 1: REQUEST RECOVERY CODE ---
+  const handleRequestRecoveryCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
@@ -215,19 +368,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setSuccessMessage(data.message || 'If an account is associated with that email, instructions have been sent.');
       setMode('forgot-code');
     } catch (err: any) {
-      setError(err.message || 'Failed to process request.');
+      setError(err.message || 'Failed to process forgot password request.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 4. FORGOT PASSWORD STEP 2: VERIFY CODE ---
-  const handleVerifyCode = async (e: React.FormEvent) => {
+  // --- 6. FORGOT PASSWORD STEP 2: VERIFY RECOVERY CODE ---
+  const handleVerifyRecoveryCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
     if (!verificationCode.trim()) {
-      setError('Please enter the 6-digit verification code.');
+      setError('Please enter the 6-digit recovery code.');
       return;
     }
 
@@ -248,13 +401,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setSuccessMessage(null);
       setMode('forgot-reset');
     } catch (err: any) {
-      setError(err.message || 'Verification failed.');
+      setError(err.message || 'Invalid or expired recovery code.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 5. FORGOT PASSWORD STEP 3: RESET PASSWORD ---
+  // --- 7. FORGOT PASSWORD STEP 3: RESET PASSWORD ---
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
@@ -290,13 +443,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         })
       });
 
-      // Success: redirect to login with confirmation
-      setSuccessMessage(data.message || 'Password reset successfully. Please log in.');
+      setSuccessMessage(data.message || 'Password reset successfully! Please sign in with your new password.');
       setPassword('');
       setConfirmPassword('');
       setVerificationCode('');
       setResetToken(null);
-      setMode('login');
+      setMode('email-password');
     } catch (err: any) {
       setError(err.message || 'Failed to reset password.');
     } finally {
@@ -327,17 +479,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           {/* Form Header */}
           <div className="mb-6">
             <h2 className="text-[26px] md:text-[30px] font-bold font-['Manrope'] text-[#1B1C19] tracking-tight">
-              {mode === 'login' && 'Welcome back'}
+              {mode === 'choice' && 'Sign In'}
+              {mode === 'email-password' && 'Sign in with Email'}
+              {mode === 'email-otp' && 'Email Verification Code'}
               {mode === 'register' && 'Create an account'}
               {mode === 'forgot-email' && 'Forgot password?'}
-              {mode === 'forgot-code' && 'Enter verification code'}
+              {mode === 'forgot-code' && 'Enter recovery code'}
               {mode === 'forgot-reset' && 'Set new password'}
             </h2>
             <p className="text-[14px] text-[#3F4945] font-normal leading-relaxed mt-1">
-              {mode === 'login' && 'Log in to your personalized engineering workspace.'}
+              {mode === 'choice' && "Choose how you'd like to authenticate to access your workspace."}
+              {mode === 'email-password' && 'Enter your registered email and password to sign in.'}
+              {mode === 'email-otp' && 'Sign in securely using a one-time code sent directly to your email.'}
               {mode === 'register' && 'Register to diagnose code, analyze ideas, and practice technical interviews.'}
-              {mode === 'forgot-email' && 'Enter your registered email address to receive password reset instructions.'}
-              {mode === 'forgot-code' && `We sent a 6-digit code to ${email}. Code expires in 10 minutes.`}
+              {mode === 'forgot-email' && 'Enter your registered email address to receive password recovery instructions.'}
+              {mode === 'forgot-code' && `We sent a 6-digit recovery code to ${email || 'your email'}. Code expires in 10 minutes.`}
               {mode === 'forgot-reset' && 'Create a new, strong password with at least 8 characters.'}
             </p>
           </div>
@@ -352,112 +508,95 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           {/* Error Notification Banner */}
           {error && (
-            <div className="mb-5 p-3.5 bg-[#FFDAD3] text-[#7C2E1D] text-[13.5px] font-semibold rounded-xl border border-[#FFB4A4] flex items-start gap-2.5 shadow-xs">
-              <span className="material-symbols-outlined text-[20px] text-[#7C2E1D] shrink-0 mt-0.5">error</span>
-              <span>{error}</span>
+            <div className="mb-5 p-3.5 bg-[#FFDAD3] text-[#7C2E1D] text-[13.5px] font-semibold rounded-xl border border-[#FFB4A4] flex flex-col gap-1.5 shadow-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="material-symbols-outlined text-[20px] text-[#7C2E1D] shrink-0 mt-0.5">error</span>
+                <span className="leading-snug">{error}</span>
+              </div>
+              {error.toLowerCase().includes('not confirmed') && email.trim() && (
+                <div className="pl-7 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={isResending}
+                    className="text-[12.5px] font-bold text-[#005144] hover:underline cursor-pointer bg-white/70 px-2.5 py-1 rounded-lg border border-[#005144]/20 transition-all inline-flex items-center gap-1"
+                  >
+                    {isResending ? 'Sending...' : 'Resend confirmation email'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* 1. LOGIN FORM                                              */}
+          {/* SCREEN 1: AUTHENTICATION CHOICES (Google vs Email)        */}
           {/* ========================================================= */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="space-y-4">
+          {mode === 'choice' && (
+            <div className="space-y-4">
+              {/* Option A: Continue with Google */}
               <div>
-                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="login-email">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975]">
-                    <span className="material-symbols-outlined text-[19px]">mail</span>
-                  </div>
-                  <input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your registered email"
-                    className="block w-full pl-10 pr-3 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945]" htmlFor="login-password">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => switchMode('forgot-email')}
-                    className="text-[12.5px] font-semibold font-['Inter'] text-[#005144] hover:underline cursor-pointer"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975]">
-                    <span className="material-symbols-outlined text-[19px]">lock</span>
-                  </div>
-                  <input
-                    id="login-password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="block w-full pl-10 pr-10 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6F7975] hover:text-[#1B1C19] cursor-pointer"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    <span className="material-symbols-outlined text-[19px]">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember Me Option */}
-              <div className="flex items-center justify-between py-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    id="login-remember-me"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-[#005144] border-[#BEC9C4] rounded focus:ring-[#005144] accent-[#005144] cursor-pointer"
-                  />
-                  <span className="text-[13px] font-medium text-[#3F4945]">Remember me</span>
-                </label>
-              </div>
-
-              <div className="pt-2">
                 <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-xs text-[14.5px] font-bold font-['Inter'] text-white bg-[#005144] hover:bg-[#176B5B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005144] transition-all cursor-pointer disabled:opacity-70"
+                  type="button"
+                  id="google-signin-btn"
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading || isGoogleLoading}
+                  className="w-full flex justify-center items-center gap-3 py-3.5 px-4 rounded-xl border border-[#BEC9C4] bg-white hover:bg-[#F5F4EF] hover:border-[#005144]/40 text-[#1B1C19] text-[15px] font-bold font-['Inter'] shadow-xs transition-all cursor-pointer disabled:opacity-60"
                 >
-                  {isLoading ? (
+                  {isGoogleLoading ? (
                     <>
                       <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                      <span>Logging in...</span>
+                      <span>Connecting to Google...</span>
                     </>
                   ) : (
-                    <span>Login</span>
+                    <>
+                      <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                        <path
+                          fill="#4285F4"
+                          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                        />
+                      </svg>
+                      <span>Continue with Google</span>
+                    </>
                   )}
                 </button>
               </div>
 
-              <div className="pt-3 text-center">
+              {/* Divider */}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-[#BEC9C4]/60"></div>
+                </div>
+                <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-semibold">
+                  <span className="bg-[#FAF9F4] px-3 text-[#6F7975]">or</span>
+                </div>
+              </div>
+
+              {/* Option B: Continue with Email */}
+              <div>
+                <button
+                  type="button"
+                  id="email-signin-btn"
+                  onClick={() => switchMode('email-password')}
+                  className="w-full flex justify-center items-center gap-2.5 py-3.5 px-4 rounded-xl border border-[#005144] bg-[#005144] hover:bg-[#176B5B] text-white text-[15px] font-bold font-['Inter'] shadow-xs transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[20px]">mail</span>
+                  <span>Continue with Email</span>
+                </button>
+              </div>
+
+              <div className="pt-6 text-center border-t border-[#BEC9C4]/30 mt-6">
                 <p className="text-[13px] text-[#3F4945]">
                   Don't have an account?{' '}
                   <button
@@ -469,11 +608,300 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   </button>
                 </p>
               </div>
-            </form>
+            </div>
           )}
 
           {/* ========================================================= */}
-          {/* 2. REGISTRATION FORM                                      */}
+          {/* SCREEN 2: EMAIL OPTIONS (Email+Password OR Email OTP)     */}
+          {/* ========================================================= */}
+          {(mode === 'email-password' || mode === 'email-otp') && (
+            <div>
+              {/* Back to choices button */}
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => switchMode('choice')}
+                  className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#005144] hover:underline cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                  <span>All sign in options</span>
+                </button>
+              </div>
+
+              {/* Segmented Control / Tabs */}
+              <div className="grid grid-cols-2 p-1 bg-[#EBEAE5] rounded-xl mb-5">
+                <button
+                  type="button"
+                  onClick={() => switchMode('email-password')}
+                  className={`py-2 px-3 text-[13px] font-bold rounded-lg transition-all cursor-pointer ${
+                    mode === 'email-password'
+                      ? 'bg-white text-[#005144] shadow-xs'
+                      : 'text-[#6F7975] hover:text-[#1B1C19]'
+                  }`}
+                >
+                  Email + Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('email-otp')}
+                  className={`py-2 px-3 text-[13px] font-bold rounded-lg transition-all cursor-pointer ${
+                    mode === 'email-otp'
+                      ? 'bg-white text-[#005144] shadow-xs'
+                      : 'text-[#6F7975] hover:text-[#1B1C19]'
+                  }`}
+                >
+                  Email Verification Code
+                </button>
+              </div>
+
+              {/* Tab 1: Email + Password Form */}
+              {mode === 'email-password' && (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="login-email">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975]">
+                        <span className="material-symbols-outlined text-[19px]">mail</span>
+                      </div>
+                      <input
+                        id="login-email"
+                        name="email"
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter your registered email"
+                        className="block w-full pl-10 pr-3 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945]" htmlFor="login-password">
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => switchMode('forgot-email')}
+                        className="text-[12.5px] font-semibold font-['Inter'] text-[#005144] hover:underline cursor-pointer"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975]">
+                        <span className="material-symbols-outlined text-[19px]">lock</span>
+                      </div>
+                      <input
+                        id="login-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="block w-full pl-10 pr-10 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6F7975] hover:text-[#1B1C19] cursor-pointer"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        <span className="material-symbols-outlined text-[19px]">
+                          {showPassword ? 'visibility_off' : 'visibility'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Remember Me Option */}
+                  <div className="flex items-center justify-between py-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        id="login-remember-me"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 text-[#005144] border-[#BEC9C4] rounded focus:ring-[#005144] accent-[#005144] cursor-pointer"
+                      />
+                      <span className="text-[13px] font-medium text-[#3F4945]">Remember me</span>
+                    </label>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-xs text-[14.5px] font-bold font-['Inter'] text-white bg-[#005144] hover:bg-[#176B5B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005144] transition-all cursor-pointer disabled:opacity-70"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                          <span>Signing in...</span>
+                        </>
+                      ) : (
+                        <span>Sign In</span>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="pt-3 text-center">
+                    <p className="text-[13px] text-[#3F4945]">
+                      Don't have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => switchMode('register')}
+                        className="font-bold font-['Inter'] text-[#005144] hover:underline cursor-pointer"
+                      >
+                        Create an account
+                      </button>
+                    </p>
+                  </div>
+                </form>
+              )}
+
+              {/* Tab 2: Email OTP Form */}
+              {mode === 'email-otp' && (
+                <div>
+                  {!loginOtpSent ? (
+                    <form onSubmit={handleSendLoginOtp} className="space-y-4">
+                      <div>
+                        <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="otp-email">
+                          Your email address
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6F7975]">
+                            <span className="material-symbols-outlined text-[19px]">mail</span>
+                          </div>
+                          <input
+                            id="otp-email"
+                            name="email"
+                            type="email"
+                            required
+                            autoComplete="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@university.edu"
+                            className="block w-full pl-10 pr-3 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
+                          />
+                        </div>
+                        <p className="text-[12px] text-[#6F7975] mt-1.5">
+                          We will send a 6-digit one-time sign-in code to this address. No password required.
+                        </p>
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          type="submit"
+                          disabled={isSendingLoginOtp || !email.trim()}
+                          className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-xs text-[14.5px] font-bold font-['Inter'] text-white bg-[#005144] hover:bg-[#176B5B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005144] transition-all cursor-pointer disabled:opacity-70"
+                        >
+                          {isSendingLoginOtp ? (
+                            <>
+                              <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                              <span>Sending code...</span>
+                            </>
+                          ) : (
+                            <span>Send Sign-in Code</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyLoginOtp} className="space-y-4">
+                      <div className="p-3 bg-[#D6E6E0]/60 rounded-xl border border-[#89D5C1]/60 flex items-center justify-between text-[13px]">
+                        <span className="text-[#005144] font-medium truncate">
+                          Code sent to: <strong>{email}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setLoginOtpSent(false)}
+                          className="text-[#005144] font-bold underline text-[12px] shrink-0 ml-2 cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="login-otp-code">
+                          6-Digit Verification Code
+                        </label>
+                        <div className="relative">
+                          <input
+                            id="login-otp-code"
+                            name="loginOtpCode"
+                            type="text"
+                            maxLength={6}
+                            required
+                            value={loginOtpCode}
+                            onChange={(e) => setLoginOtpCode(e.target.value.replace(/\D/g, ''))}
+                            placeholder="123456"
+                            className="block w-full py-3 text-center tracking-[8px] text-[22px] font-mono font-bold border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#005144] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all placeholder-[#BEC9C4]"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-2 text-[12px] text-[#6F7975]">
+                          <span>Code expires in 10 minutes</span>
+                          <button
+                            type="button"
+                            onClick={() => handleSendLoginOtp()}
+                            disabled={otpCooldown > 0 || isSendingLoginOtp}
+                            className="text-[#005144] font-bold hover:underline cursor-pointer disabled:opacity-50 disabled:no-underline"
+                          >
+                            {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
+                          </button>
+                        </div>
+                        <div className="mt-2.5 p-2.5 bg-[#F5F4EF] rounded-lg border border-[#BEC9C4]/50 text-[12px] text-[#53615D] flex items-start gap-2">
+                          <span className="material-symbols-outlined text-[16px] text-[#005144] shrink-0 mt-0.5">info</span>
+                          <span className="leading-snug">
+                            Delivery may take a moment. If the code does not appear in your inbox, please check your <strong>Spam or Junk</strong> folder.
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Remember Me Option */}
+                      <div className="flex items-center justify-between py-1">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="w-4 h-4 text-[#005144] border-[#BEC9C4] rounded focus:ring-[#005144] accent-[#005144] cursor-pointer"
+                          />
+                          <span className="text-[13px] font-medium text-[#3F4945]">Remember me</span>
+                        </label>
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          type="submit"
+                          disabled={isVerifyingLoginOtp || loginOtpCode.length !== 6}
+                          className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-xs text-[14.5px] font-bold font-['Inter'] text-white bg-[#005144] hover:bg-[#176B5B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005144] transition-all cursor-pointer disabled:opacity-70"
+                        >
+                          {isVerifyingLoginOtp ? (
+                            <>
+                              <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                              <span>Verifying code...</span>
+                            </>
+                          ) : (
+                            <span>Verify & Sign In</span>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* SCREEN 3: REGISTRATION FORM                               */}
           {/* ========================================================= */}
           {mode === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
@@ -537,7 +965,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimum 8 characters"
+                    placeholder="At least 8 characters"
                     className="block w-full pl-10 pr-10 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
                   />
                   <button
@@ -566,12 +994,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         }}
                       ></div>
                     </div>
-                    <p className={`text-[11px] font-medium flex items-center gap-1 ${password.length >= 8 ? 'text-[#005144]' : 'text-[#7C2E1D]'}`}>
-                      <span className="material-symbols-outlined text-[13px]">
-                        {password.length >= 8 ? 'check_circle' : 'cancel'}
-                      </span>
-                      At least 8 characters ({password.length}/8)
-                    </p>
                   </div>
                 )}
               </div>
@@ -628,7 +1050,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       <span>Creating account...</span>
                     </>
                   ) : (
-                    <span>Register</span>
+                    <span>Create Account</span>
                   )}
                 </button>
               </div>
@@ -638,10 +1060,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   Already have an account?{' '}
                   <button
                     type="button"
-                    onClick={() => switchMode('login')}
+                    onClick={() => switchMode('choice')}
                     className="font-bold font-['Inter'] text-[#005144] hover:underline cursor-pointer"
                   >
-                    Back to Login
+                    Sign in
                   </button>
                 </p>
               </div>
@@ -649,10 +1071,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           )}
 
           {/* ========================================================= */}
-          {/* 3. FORGOT PASSWORD - STEP 1: EMAIL ENTRY                   */}
+          {/* SCREEN 4: FORGOT PASSWORD - STEP 1 (EMAIL ENTRY)          */}
           {/* ========================================================= */}
           {mode === 'forgot-email' && (
-            <form onSubmit={handleRequestCode} className="space-y-4">
+            <form onSubmit={handleRequestRecoveryCode} className="space-y-4">
               <div>
                 <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="forgot-email">
                   Registered email address
@@ -672,12 +1094,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     className="block w-full pl-10 pr-3 py-3 border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all text-[14.5px] placeholder-[#6F7975]"
                   />
                 </div>
+                <p className="text-[12px] text-[#6F7975] mt-1.5">
+                  A 6-digit recovery code will be dispatched to your email address.
+                </p>
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !email.trim()}
                   className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl shadow-xs text-[14.5px] font-bold font-['Inter'] text-white bg-[#005144] hover:bg-[#176B5B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005144] transition-all cursor-pointer disabled:opacity-70"
                 >
                   {isLoading ? (
@@ -686,7 +1111,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       <span>Sending instructions...</span>
                     </>
                   ) : (
-                    <span>Send Verification Code</span>
+                    <span>Send Recovery Code</span>
                   )}
                 </button>
               </div>
@@ -694,24 +1119,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="pt-3 text-center">
                 <button
                   type="button"
-                  onClick={() => switchMode('login')}
+                  onClick={() => switchMode('choice')}
                   className="text-[13px] font-bold font-['Inter'] text-[#005144] hover:underline flex items-center justify-center gap-1 mx-auto cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                  Back to Login
+                  Back to Sign In
                 </button>
               </div>
             </form>
           )}
 
           {/* ========================================================= */}
-          {/* 4. FORGOT PASSWORD - STEP 2: VERIFICATION CODE            */}
+          {/* SCREEN 5: FORGOT PASSWORD - STEP 2 (CODE ENTRY)           */}
           {/* ========================================================= */}
           {mode === 'forgot-code' && (
-            <form onSubmit={handleVerifyCode} className="space-y-4">
+            <form onSubmit={handleVerifyRecoveryCode} className="space-y-4">
               <div>
                 <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5" htmlFor="verify-code">
-                  6-Digit Verification Code
+                  6-Digit Recovery Code
                 </label>
                 <div className="relative">
                   <input
@@ -723,14 +1148,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
-                    className="block w-full py-3.5 text-center tracking-[8px] text-[22px] font-mono font-bold border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#005144] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all placeholder-[#BEC9C4]"
+                    className="block w-full py-3 text-center tracking-[8px] text-[22px] font-mono font-bold border border-[#BEC9C4] rounded-xl bg-[#F5F4EF] text-[#005144] focus:outline-none focus:ring-2 focus:ring-[#005144] focus:border-[#005144] transition-all placeholder-[#BEC9C4]"
                   />
                 </div>
                 <div className="flex justify-between items-center mt-2 text-[12px] text-[#6F7975]">
                   <span>Expires in 10 minutes</span>
                   <button
                     type="button"
-                    onClick={handleRequestCode}
+                    onClick={handleRequestRecoveryCode}
                     className="text-[#005144] font-bold hover:underline cursor-pointer"
                   >
                     Resend code
@@ -758,18 +1183,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="pt-3 text-center">
                 <button
                   type="button"
-                  onClick={() => switchMode('login')}
+                  onClick={() => switchMode('choice')}
                   className="text-[13px] font-bold font-['Inter'] text-[#005144] hover:underline flex items-center justify-center gap-1 mx-auto cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                  Back to Login
+                  Back to Sign In
                 </button>
               </div>
             </form>
           )}
 
           {/* ========================================================= */}
-          {/* 5. FORGOT PASSWORD - STEP 3: RESET PASSWORD               */}
+          {/* SCREEN 6: FORGOT PASSWORD - STEP 3 (NEW PASSWORD ENTRY)   */}
           {/* ========================================================= */}
           {mode === 'forgot-reset' && (
             <form onSubmit={handleResetPassword} className="space-y-4">
@@ -886,11 +1311,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="pt-3 text-center">
                 <button
                   type="button"
-                  onClick={() => switchMode('login')}
+                  onClick={() => switchMode('choice')}
                   className="text-[13px] font-bold font-['Inter'] text-[#005144] hover:underline flex items-center justify-center gap-1 mx-auto cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                  Back to Login
+                  Back to Sign In
                 </button>
               </div>
             </form>

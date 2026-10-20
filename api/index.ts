@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 
+process.env.VERCEL = process.env.VERCEL || '1';
 let appInstance: any = null;
 let initError: any = null;
 

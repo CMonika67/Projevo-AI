@@ -121,8 +121,8 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
               onClick={onOpenAdaptiveSupport}
               className="bg-[#D6E6E0] hover:bg-[#BACAC4] text-[#005144] transition-all rounded-lg px-5 py-3 text-[13px] font-bold font-['Inter'] flex items-center gap-2 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">support_agent</span>
-              <span>Open Code Assistant</span>
+              <span className="material-symbols-outlined text-[18px]">insights</span>
+              <span>Open Skill Gap Analysis</span>
             </button>
           </div>
         </div>
@@ -131,8 +131,12 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
       {/* Category Cards Grid (Bento matching Image 5) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((cat) => {
-          const isCritical = cat.status === 'critical';
-          const isNeedsAttention = cat.status === 'needs-attention';
+          const isNA = cat.score === -1;
+          const isCritical = !isNA && cat.status === 'critical';
+          const isNeedsAttention = !isNA && cat.status === 'needs-attention';
+          const safeIcon = (cat.name.toLowerCase().includes('brute') || cat.icon === 'shield_off')
+            ? 'gpp_bad'
+            : (cat.icon || 'verified_user');
 
           return (
             <div
@@ -159,7 +163,7 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
                       : 'bg-[#F5F4EF] text-[#176B5B] group-hover:bg-[#D6E6E0]'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[22px]">{cat.icon}</span>
+                  <span className="material-symbols-outlined text-[22px]">{safeIcon}</span>
                 </div>
                 <h3 className="text-[20px] font-bold font-['Manrope'] text-[#005144]">
                   {cat.name}
@@ -169,14 +173,34 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
               <div className="mt-auto">
                 <div
                   className={`text-[44px] font-bold font-['Manrope'] mb-1 ${
-                    isCritical ? 'text-[#D95F59]' : 'text-[#005144]'
+                    isCritical ? 'text-[#D95F59]' : isNA ? 'text-[#707974] text-[32px]' : 'text-[#005144]'
                   }`}
                 >
-                  {cat.score}
+                  {isNA ? 'N/A' : cat.score}
                 </div>
 
                 <div className="flex items-center gap-2 text-[12px] font-bold font-['Inter']">
-                  {isCritical ? (
+                  {cat.analysisStatus === 'not_analyzed' ? (
+                    <span className="inline-flex items-center gap-1.5 text-[#707974]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#8E918F]"></span>
+                      Not Analyzed
+                    </span>
+                  ) : cat.analysisStatus === 'insufficient_evidence' ? (
+                    <span className="inline-flex items-center gap-1.5 text-[#D6A84F]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D6A84F]"></span>
+                      Insufficient Evidence
+                    </span>
+                  ) : cat.analysisStatus === 'analysis_failed' ? (
+                    <span className="inline-flex items-center gap-1.5 text-[#D95F59]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D95F59]"></span>
+                      Analysis Failed
+                    </span>
+                  ) : isNA ? (
+                    <span className="inline-flex items-center gap-1.5 text-[#707974]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#BEC9C4]"></span>
+                      Not Applicable
+                    </span>
+                  ) : isCritical ? (
                     <span className="inline-flex items-center gap-1.5 text-[#D95F59]">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#D95F59] animate-pulse"></span>
                       Critical
@@ -194,8 +218,10 @@ export const HealthReportView: React.FC<HealthReportViewProps> = ({
                   )}
                 </div>
 
-                {cat.note && (
-                  <p className="text-[12px] text-[#6F7975] mt-2 line-clamp-1">{cat.note}</p>
+                {(cat.reason || cat.note) && (
+                  <p className="text-[12px] text-[#6F7975] mt-2 line-clamp-2">
+                    {cat.reason || cat.note}
+                  </p>
                 )}
               </div>
             </div>

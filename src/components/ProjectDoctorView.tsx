@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ScreenType, HealthCategory, CriticalIssue } from '../types';
+import { ScreenType, HealthCategory, CriticalIssue, ProjectData } from '../types';
 
 interface ProjectDoctorViewProps {
+  currentProject?: ProjectData | null;
   onNavigate: (screen: ScreenType) => void;
   onDiagnosticComplete: (data: {
     overallHealth: number;
@@ -11,43 +12,52 @@ interface ProjectDoctorViewProps {
 }
 
 export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
+  currentProject,
   onNavigate,
   onDiagnosticComplete,
 }) => {
-  const [techStack, setTechStack] = useState('Python, FastAPI, PyTorch, Pandas');
+  const [techStack, setTechStack] = useState(
+    currentProject?.techStack?.join(', ') || ''
+  );
   const [description, setDescription] = useState(
-    'AI Healthcare Assistant: Clinical triage and symptom entity extraction pipeline with role-based dashboard.'
+    currentProject?.tagline || ''
   );
   
   // Track raw File object or preset selected file
   const [rawFile, setRawFile] = useState<File | null>(null);
-  const [selectedFile, setSelectedFile] = useState<{ name: string; content: string } | null>({
-    name: 'data_processor.py',
-    content: 'import pandas as pd\nimport numpy as np\n\ndef clean_dataset(filepath):\n    try:\n        raw_data = pd.read_csv(filepath)\n        cleaned_subset = raw_data.dropna()\n    except FileNotFoundError:\n        print("File missing!")\n    return cleaned_subset.groupby("id").sum()'
-  });
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size?: number; content: string } | null>(null);
+
+  const [inferredInfo, setInferredInfo] = useState<{
+    title?: string;
+    description?: string;
+    techStack?: string[];
+    confidence?: 'high' | 'medium' | 'low';
+    architecture?: string;
+  } | null>(null);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Analysis checklist state
   const [analysisSteps, setAnalysisSteps] = useState<{ label: string; status: 'pending' | 'active' | 'done' }[]>([
-    { label: 'Uploading project...', status: 'pending' },
-    { label: 'File received', status: 'pending' },
-    { label: 'Project structure analyzed', status: 'pending' },
-    { label: 'Checking code quality', status: 'pending' },
-    { label: 'Checking security', status: 'pending' },
-    { label: 'Checking accessibility', status: 'pending' },
-    { label: 'Checking performance', status: 'pending' },
-    { label: 'Preparing report', status: 'pending' }
+    { label: 'Uploading project artifacts...', status: 'pending' },
+    { label: 'Validating file integrity & size', status: 'pending' },
+    { label: 'Inferring architecture & dependencies', status: 'pending' },
+    { label: 'Checking code quality & maintainability', status: 'pending' },
+    { label: 'Auditing security & authentication', status: 'pending' },
+    { label: 'Checking accessibility & performance', status: 'pending' },
+    { label: 'Preparing grounded diagnostic report', status: 'pending' }
   ]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validate extension
-      const allowedExts = /\.(py|js|ts|tsx|json|zip|txt)$/i;
+      const allowedExts = /\.(py|js|jsx|ts|tsx|java|cpp|c|h|cs|go|rs|php|rb|json|toml|xml|yaml|yml|md|txt|zip)$/i;
       if (!allowedExts.test(file.name)) {
-        setUploadError('Invalid file type. Please upload a ZIP archive or a supported source file (.py, .js, .ts, .tsx, .json, .txt).');
+        setUploadError(
+          'Unsupported file format. Supported: source code (.py, .js, .jsx, .ts, .tsx, .java, .cpp, .c, .go, .rs), dependency manifests (.json, .toml, .xml, .yaml), docs (.md, .txt), or ZIP archives.'
+        );
         setRawFile(null);
         setSelectedFile(null);
         return;
@@ -56,7 +66,8 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
       // Validate file size (10MB max limit)
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        setUploadError('File size exceeds the 10MB limit.');
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setUploadError(`File size (${sizeMb}MB) exceeds the maximum allowed limit of 10MB.`);
         setRawFile(null);
         setSelectedFile(null);
         return;
@@ -64,38 +75,69 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
 
       setUploadError(null);
       setRawFile(file);
-      setSelectedFile({ name: file.name, content: '[Binary Data / Source Code Archive]' });
+      setSelectedFile({
+        name: file.name,
+        size: file.size,
+        content: '[Binary / Source Code Archive Payload]'
+      });
 
-      // If ZIP file, auto-set suggestions
-      if (file.name.toLowerCase().endsWith('.zip')) {
-        setTechStack('ZIP Archive Project');
-      } else if (file.name.toLowerCase().endsWith('.py')) {
-        setTechStack('Python Script');
-      } else if (file.name.toLowerCase().endsWith('.js') || file.name.toLowerCase().endsWith('.ts')) {
-        setTechStack('JavaScript / TypeScript File');
+      // Quick local inference based on file name & extension
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      let detectedTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      detectedTitle = detectedTitle.charAt(0).toUpperCase() + detectedTitle.slice(1);
+
+      let detectedStack = 'Custom Application';
+      if (ext === 'zip') {
+        detectedStack = 'Multi-file Project Archive';
+      } else if (ext === 'py') {
+        detectedStack = 'Python';
+      } else if (ext === 'ts' || ext === 'tsx') {
+        detectedStack = 'TypeScript, React';
+      } else if (ext === 'js' || ext === 'jsx') {
+        detectedStack = 'JavaScript, Node.js';
+      } else if (ext === 'json') {
+        detectedStack = 'JSON Manifest / Config';
       }
+
+      setInferredInfo({
+        title: detectedTitle,
+        description: `Uploaded file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
+        techStack: [detectedStack],
+        confidence: ext === 'zip' ? 'medium' : 'low',
+        architecture: 'Project source artifacts'
+      });
+      setTechStack(detectedStack);
     }
   };
 
+  const handleRemoveFile = () => {
+    setRawFile(null);
+    setSelectedFile(null);
+    setInferredInfo(null);
+    setUploadError(null);
+  };
+
   const handleAnalyze = async () => {
+    if (!selectedFile && !rawFile) {
+      setUploadError('Please select or upload at least one code file or ZIP archive.');
+      return;
+    }
+
     setIsAnalyzing(true);
     setUploadError(null);
 
-    // Initialize progress step sequence
     setAnalysisSteps([
-      { label: 'Uploading project...', status: 'active' },
-      { label: 'File received', status: 'pending' },
-      { label: 'Project structure analyzed', status: 'pending' },
-      { label: 'Checking code quality', status: 'pending' },
-      { label: 'Checking security', status: 'pending' },
-      { label: 'Checking accessibility', status: 'pending' },
-      { label: 'Checking performance', status: 'pending' },
-      { label: 'Preparing report', status: 'pending' }
+      { label: 'Uploading project artifacts...', status: 'active' },
+      { label: 'Validating file integrity & size', status: 'pending' },
+      { label: 'Inferring architecture & dependencies', status: 'pending' },
+      { label: 'Checking code quality & maintainability', status: 'pending' },
+      { label: 'Auditing security & authentication', status: 'pending' },
+      { label: 'Checking accessibility & performance', status: 'pending' },
+      { label: 'Preparing grounded diagnostic report', status: 'pending' }
     ]);
 
-    // Timed step updates for beautiful user feedback
     const timers: number[] = [];
-    const triggerStepTransition = (idx: number, delay: number) => {
+    const triggerStep = (idx: number, delay: number) => {
       const t = window.setTimeout(() => {
         setAnalysisSteps((prev) =>
           prev.map((step, i) =>
@@ -107,13 +149,12 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
       timers.push(t);
     };
 
-    triggerStepTransition(1, 500);   // File received
-    triggerStepTransition(2, 1000);  // Structure analyzed
-    triggerStepTransition(3, 1600);  // Checking quality
-    triggerStepTransition(4, 2200);  // Checking security
-    triggerStepTransition(5, 2800);  // Checking accessibility
-    triggerStepTransition(6, 3300);  // Checking performance
-    triggerStepTransition(7, 3800);  // Preparing report
+    triggerStep(1, 500);
+    triggerStep(2, 1000);
+    triggerStep(3, 1600);
+    triggerStep(4, 2200);
+    triggerStep(5, 2800);
+    triggerStep(6, 3400);
 
     try {
       const formData = new FormData();
@@ -122,8 +163,6 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
       } else if (selectedFile) {
         const blob = new Blob([selectedFile.content], { type: 'text/plain' });
         formData.append('file', blob, selectedFile.name);
-      } else {
-        throw new Error('No files or preset code available.');
       }
 
       formData.append('stack', techStack);
@@ -139,7 +178,6 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
 
       if (res.ok) {
         const data = await res.json();
-        // Wait for visual steps transition to complete
         const finalTimer = window.setTimeout(() => {
           setAnalysisSteps((prev) => prev.map((step) => ({ ...step, status: 'done' })));
           
@@ -152,10 +190,10 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
             });
             onNavigate('health-report');
           }, 400);
-        }, 4100);
+        }, 3800);
         timers.push(finalTimer);
       } else {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Server diagnostic run failed.');
       }
     } catch (err: any) {
@@ -167,7 +205,7 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* Page Header */}
+      {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <button
@@ -186,186 +224,212 @@ export const ProjectDoctorView: React.FC<ProjectDoctorViewProps> = ({
           <span>Project Doctor</span>
         </h1>
         <p className="text-[16px] text-[#3F4945] font-['Manrope'] mt-1">
-          Diagnose your project's technical health.
+          Upload and diagnose your codebase for architecture, security vulnerabilities, code smells, and performance.
         </p>
+      </div>
+
+      {/* Upload Guidance Banner */}
+      <div className="bg-[#FFFFFF] rounded-2xl border border-[#BEC9C4]/40 p-6 bento-shadow space-y-3">
+        <div className="flex items-center gap-2 text-[15px] font-bold font-['Manrope'] text-[#005144]">
+          <span className="material-symbols-outlined text-[#176B5B] text-[20px]">help_center</span>
+          <span>What to Upload &amp; Guidance</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[13px] font-['Inter'] text-[#3F4945]">
+          <div className="space-y-1">
+            <span className="font-bold text-[#005144]">Useful Inputs:</span>
+            <ul className="list-disc list-inside space-y-0.5 text-[#53615D]">
+              <li>Source code files: <code>.py</code>, <code>.js</code>, <code>.jsx</code>, <code>.ts</code>, <code>.tsx</code>, <code>.java</code>, <code>.cpp</code>, <code>.go</code>, <code>.rs</code></li>
+              <li>Dependency manifests: <code>package.json</code>, <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>pom.xml</code></li>
+              <li>Project documentation: <code>README.md</code>, architecture notes</li>
+              <li>ZIP archive: Full repository or source tree (extracted securely up to 10MB)</li>
+            </ul>
+          </div>
+          <div className="space-y-1 bg-[#FFF9C4]/30 p-3 rounded-xl border border-[#FFF59D]">
+            <span className="font-bold text-[#C62828] flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">security</span>
+              Security &amp; Privacy Notice:
+            </span>
+            <p className="text-[#53615D] text-[12px] leading-relaxed">
+              Do <strong>NOT</strong> upload sensitive secrets, production database credentials, API keys (<code>.env</code>), private SSH keys, or certificates. The diagnostic engine inspects static code quality and security patterns.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Upload Area */}
-        <div className="lg:col-span-2 bg-[#FFFFFF] rounded-2xl bento-shadow border border-[#BEC9C4]/40 p-6 md:p-8 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-[22px] font-bold font-['Manrope'] text-[#005144]">
-              Upload Artifacts
-            </h2>
-            {selectedFile && (
-              <span className="px-3 py-1 bg-[#D6E6E0] text-[#005144] text-[12px] font-bold font-['Inter'] rounded-full flex items-center gap-1">
-                <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                {selectedFile.name}
+        <div className="lg:col-span-2 bg-[#FFFFFF] rounded-2xl bento-shadow border border-[#BEC9C4]/40 p-6 md:p-8 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-[20px] font-bold font-['Manrope'] text-[#005144]">
+                Upload Artifacts
+              </h2>
+              <span className="text-[12px] font-bold text-[#707974] font-['Inter'] bg-[#FAF9F4] px-2.5 py-1 rounded-md border border-[#BEC9C4]/50">
+                Max Supported: 10 MB
               </span>
+            </div>
+
+            {/* Selected File Card */}
+            {selectedFile && (
+              <div className="mb-4 p-4 bg-[#E8F5E9] border border-[#A5D6A7] rounded-xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[#1B5E20] text-[24px]">description</span>
+                  <div>
+                    <div className="font-bold text-[#005144] text-[14px] font-['Manrope']">{selectedFile.name}</div>
+                    <div className="text-[12px] text-[#53615D] font-['Inter']">
+                      {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : 'Preset sample code file'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={isAnalyzing}
+                  onClick={handleRemoveFile}
+                  className="px-2.5 py-1 text-[12px] font-bold text-[#C62828] hover:bg-[#FFEBEE] rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </div>
             )}
-          </div>
 
-          <label className="flex-1 border-2 border-dashed border-[#BEC9C4] rounded-xl flex flex-col items-center justify-center p-8 md:p-12 bg-[#F5F4EF] hover:bg-[#EFEEE9] transition-all group cursor-pointer relative min-h-[220px]">
-            <input
-              type="file"
-              onChange={handleFileUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              accept=".py,.js,.ts,.tsx,.json,.zip,.txt"
-              disabled={isAnalyzing}
-            />
-            <div className="w-16 h-16 bg-[#176B5B] text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xs">
-              <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
-            </div>
-            <p className="text-[20px] font-bold font-['Manrope'] text-[#005144] mb-1.5 text-center">
-              Drag &amp; Drop or Browse
-            </p>
-            <p className="text-[13px] text-[#3F4945] text-center max-w-sm">
-              Supported files: ZIP archives (.zip), Python scripts (.py), JS/TS files, or manifest JSONs.
-            </p>
-            <div className="mt-6 px-6 py-2.5 bg-[#005144] text-white rounded-lg text-[13px] font-bold font-['Inter'] shadow-sm group-hover:bg-[#166A5A] transition-colors">
-              Select Files
-            </div>
-          </label>
+            {/* Drop Zone */}
+            <label className="border-2 border-dashed border-[#BEC9C4] rounded-xl flex flex-col items-center justify-center p-8 md:p-12 bg-[#F5F4EF] hover:bg-[#EFEEE9] transition-all group cursor-pointer relative min-h-[200px]">
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                accept=".py,.js,.jsx,.ts,.tsx,.java,.cpp,.c,.go,.rs,.json,.toml,.xml,.yaml,.yml,.md,.txt,.zip"
+                disabled={isAnalyzing}
+              />
+              <div className="w-14 h-14 bg-[#176B5B] text-white rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-xs">
+                <span className="material-symbols-outlined text-[28px]">cloud_upload</span>
+              </div>
+              <p className="text-[18px] font-bold font-['Manrope'] text-[#005144] mb-1 text-center">
+                Drag &amp; Drop or Browse Files
+              </p>
+              <p className="text-[13px] text-[#53615D] text-center max-w-sm font-['Inter']">
+                Source code (.py, .js, .ts, etc.), manifests, or full ZIP archives up to 10MB.
+              </p>
+              <div className="mt-4 px-5 py-2 bg-[#005144] text-white rounded-lg text-[13px] font-bold font-['Inter'] shadow-xs group-hover:bg-[#166A5A] transition-colors">
+                Select Project File
+              </div>
+            </label>
 
-          {uploadError && (
-            <div className="mt-4 p-3.5 bg-[#FFDAD6] text-[#7C2E1D] border border-[#FFB4A4]/40 rounded-xl text-[13px] font-semibold">
-              {uploadError}
-            </div>
-          )}
+            {uploadError && (
+              <div className="mt-4 p-3.5 bg-[#FFEBEE] text-[#C62828] border border-[#EF9A9A] rounded-xl text-[13px] font-semibold font-['Inter'] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                <span>{uploadError}</span>
+              </div>
+            )}
 
-          {/* Preset Sample Code Quick Selector */}
-          <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-[#BEC9C4]/30">
-            <span className="text-[12px] font-bold text-[#6F7975]">Sample Code:</span>
-            <button
-              type="button"
-              disabled={isAnalyzing}
-              onClick={() => {
-                setRawFile(null);
-                setSelectedFile({
-                  name: 'data_processor.py',
-                  content: 'import pandas as pd\nimport numpy as np\n\ndef clean_dataset(filepath):\n    try:\n        raw_data = pd.read_csv(filepath)\n        cleaned_subset = raw_data.dropna()\n    except FileNotFoundError:\n        print("File missing!")\n    return cleaned_subset.groupby("id").sum()'
-                });
-                setTechStack('Python, Pandas, NumPy');
-                setUploadError(null);
-              }}
-              className="px-3 py-1 bg-[#F5F4EF] hover:bg-[#D6E6E0] rounded-md text-[12px] text-[#005144] font-medium border border-[#BEC9C4]/40 cursor-pointer disabled:opacity-50"
-            >
-              data_processor.py
-            </button>
-            <button
-              type="button"
-              disabled={isAnalyzing}
-              onClick={() => {
-                setRawFile(null);
-                setSelectedFile({
-                  name: 'auth_service.py',
-                  content: 'def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    if not verify_password(request.password, user.hash):\n        return {"error": "Invalid credentials"}'
-                });
-                setTechStack('Python, FastAPI, SQLAlchemy');
-                setUploadError(null);
-              }}
-              className="px-3 py-1 bg-[#F5F4EF] hover:bg-[#D6E6E0] rounded-md text-[12px] text-[#005144] font-medium border border-[#BEC9C4]/40 cursor-pointer disabled:opacity-50"
-            >
-              auth_service.py
-            </button>
+            {/* Upload Guidance Banner */}
+            <div className="mt-4 p-3 bg-[#FAF9F4] rounded-xl border border-[#BEC9C4]/30 flex items-center justify-between text-[12px] font-['Inter'] text-[#53615D]">
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-[#005144]">check_circle</span>
+                <span>Select a single source code file (.py, .js, .ts, etc.), dependency manifest, or full project .zip archive.</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Context & Analysis Panel */}
+        {/* Context & Inferred Info Panel */}
         <div className="lg:col-span-1 bg-[#FFFFFF] rounded-2xl bento-shadow border border-[#BEC9C4]/40 p-6 md:p-8 flex flex-col justify-between">
           <div>
-            <h3 className="text-[20px] font-bold font-['Manrope'] text-[#005144] mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#005144]">tune</span>
-              <span>Project Context</span>
+            <h3 className="text-[18px] font-bold font-['Manrope'] text-[#005144] mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#005144]">auto_awesome</span>
+              <span>Project Auto-Inference</span>
             </h3>
+
+            {inferredInfo ? (
+              <div className="p-4 bg-[#FAF9F4] rounded-xl border border-[#BEC9C4]/40 mb-4 space-y-2 text-[13px] font-['Inter']">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#005144]">Inferred Project:</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-[#E8F5E9] text-[#1B5E20]">
+                    {inferredInfo.confidence} confidence
+                  </span>
+                </div>
+                <div className="font-semibold text-[#1B1C19]">{inferredInfo.title}</div>
+                {inferredInfo.techStack && (
+                  <div className="text-[12px] text-[#53615D]">
+                    Detected Stack: {inferredInfo.techStack.join(', ')}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-[13px] text-[#53615D] font-['Inter'] mb-4">
+                Upload your files above. Project title, description, and stack will be automatically inferred.
+              </p>
+            )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5">
-                  Technology Stack
+                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1">
+                  Technology Stack (Editable)
                 </label>
                 <input
                   type="text"
                   disabled={isAnalyzing}
                   value={techStack}
                   onChange={(e) => setTechStack(e.target.value)}
-                  placeholder="e.g. React, Node.js, Python"
-                  className="w-full h-12 bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl px-4 text-[14px] font-['Manrope'] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] transition-all disabled:opacity-75"
+                  placeholder="e.g. Python, FastAPI, React"
+                  className="w-full h-10 bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl px-3 text-[13px] font-['Inter'] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] disabled:opacity-75"
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1.5">
-                  Project Description (Optional)
+                <label className="block text-[13px] font-bold font-['Inter'] text-[#3F4945] mb-1">
+                  Project Description (Editable)
                 </label>
                 <textarea
                   rows={3}
                   disabled={isAnalyzing}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Briefly describe what the project is supposed to do..."
-                  className="w-full bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl p-4 text-[14px] font-['Manrope'] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] transition-all resize-none disabled:opacity-75"
+                  placeholder="Inferred or custom project description..."
+                  className="w-full bg-[#FAF9F4] border border-[#BEC9C4] rounded-xl p-3 text-[13px] font-['Inter'] text-[#1B1C19] focus:outline-none focus:ring-2 focus:ring-[#005144] resize-none disabled:opacity-75"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-8">
-            {/* Analysis progress checklist */}
+          <div className="mt-6">
+            {/* Analysis Progress Checklist */}
             {isAnalyzing && (
               <div className="mb-4 p-4 bg-[#FAF9F4] rounded-xl border border-[#BEC9C4]/40 space-y-2 animate-fadeIn">
-                <h4 className="text-[12px] font-bold text-[#005144] uppercase tracking-wider mb-2">
+                <h4 className="text-[11px] font-bold text-[#005144] uppercase tracking-wider mb-2 font-['Inter']">
                   Diagnostic Progress Checklist:
                 </h4>
-                <div className="space-y-1.5">
-                  {analysisSteps.map((step, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-[12px]">
-                      {step.status === 'done' && (
-                        <span className="material-symbols-outlined text-[#2E8B70] text-[15px] filled">check_circle</span>
-                      )}
-                      {step.status === 'active' && (
-                        <span className="material-symbols-outlined text-[#D6A84F] text-[15px] animate-spin">progress_activity</span>
-                      )}
-                      {step.status === 'pending' && (
-                        <span className="material-symbols-outlined text-[#6F7975] text-[15px]">circle</span>
-                      )}
-                      <span className={`${
-                        step.status === 'done' ? 'text-[#3F4945] font-medium' :
-                        step.status === 'active' ? 'text-[#005144] font-bold' :
-                        'text-[#6F7975]'
-                      }`}>
-                        {step.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {analysisSteps.map((step) => (
+                  <div key={step.label} className="flex items-center gap-2 text-[12px] font-['Inter']">
+                    {step.status === 'done' && (
+                      <span className="material-symbols-outlined text-[16px] text-[#1B5E20]">check_circle</span>
+                    )}
+                    {step.status === 'active' && (
+                      <span className="material-symbols-outlined text-[16px] text-[#005144] animate-spin">sync</span>
+                    )}
+                    {step.status === 'pending' && (
+                      <span className="material-symbols-outlined text-[16px] text-[#BEC9C4]">radio_button_unchecked</span>
+                    )}
+                    <span className={step.status === 'done' ? 'text-[#1B5E20] font-semibold' : step.status === 'active' ? 'text-[#005144] font-bold' : 'text-[#707974]'}>
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
 
             <button
+              type="button"
               onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="w-full bg-[#005144] hover:bg-[#166A5A] text-white h-13 rounded-xl text-[14px] font-bold font-['Inter'] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+              disabled={isAnalyzing || (!selectedFile && !rawFile)}
+              className="w-full py-3 bg-[#005144] hover:bg-[#166A5A] text-white rounded-xl text-[14px] font-bold font-['Inter'] shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
-              {isAnalyzing ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[20px]">
-                    progress_activity
-                  </span>
-                  <span>Running Diagnostic...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
-                  <span>Analyze Project</span>
-                </>
-              )}
+              <span className={`material-symbols-outlined text-[20px] ${isAnalyzing ? 'animate-spin' : ''}`}>
+                {isAnalyzing ? 'sync' : 'medical_services'}
+              </span>
+              <span>{isAnalyzing ? 'Analyzing Project...' : 'Run Full Diagnostic'}</span>
             </button>
-
-            <p className="text-[12px] text-center text-[#6F7975] mt-3">
-              Powered by Projevo AI Diagnostic Engine
-            </p>
           </div>
         </div>
       </div>

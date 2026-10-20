@@ -5,9 +5,12 @@ import fs from 'fs';
 import path from 'path';
 import AdmZip from 'adm-zip';
 
+import { setSupabaseDisabledForTesting } from './dbAdapter';
+
 const DB_TEST_PATH = path.join(process.cwd(), 'server_db_test.json');
 
 beforeAll(() => {
+  setSupabaseDisabledForTesting(true);
   // Clean up any stray test DB
   if (fs.existsSync(DB_TEST_PATH)) {
     fs.unlinkSync(DB_TEST_PATH);
@@ -693,6 +696,118 @@ with open('scratch_test_should_not_exist.txt', 'w') as f:
       expect(res.body).toHaveProperty('hasGeminiKey');
       expect(typeof res.body.hasGeminiKey).toBe('boolean');
       expect(JSON.stringify(res.body)).not.toContain(process.env.GEMINI_API_KEY || 'AIzaSy');
+    });
+  });
+
+  describe('Security and Persistence Regression Tests (Base64 Bypass & Milestone Sync)', () => {
+    const regressionUser = {
+      fullName: 'Regression Test User',
+      email: `security_regression_${Date.now()}@projevo.ai`,
+      password: 'SecurePassword123!',
+      confirmPassword: 'SecurePassword123!'
+    };
+    let validSessionToken = '';
+
+    beforeAll(async () => {
+      await request(app).post('/api/auth/register').send(regressionUser);
+      const loginRes = await request(app).post('/api/auth/login').send({
+        email: regressionUser.email,
+        password: regressionUser.password
+      });
+      validSessionToken = loginRes.body.token;
+      expect(validSessionToken).toBeDefined();
+    });
+
+    it('should reject Base64-encoded email bearer token on protected routes and deny authentication', async () => {
+      const forgedToken = Buffer.from(regressionUser.email).toString('base64');
+      
+      // Attempt to access profile with forged base64 token
+      const profileRes = await request(app)
+        .get('/api/profile')
+        .set('Authorization', `Bearer ${forgedToken}`);
+      
+      expect(profileRes.status).toBe(401);
+      expect(profileRes.body.error).toContain('Unauthorized');
+
+      // Attempt to access session check endpoint with forged base64 token
+      const meRes = await request(app)
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${forgedToken}`);
+      
+      expect(meRes.status).toBe(401);
+    });
+
+    it('should reject malformed or non-existent session tokens', async () => {
+      const res = await request(app)
+        .get('/api/profile')
+        .set('Authorization', 'Bearer totally_fabricated_and_invalid_token_99999');
+      
+      expect(res.status).toBe(401);
+    });
+
+    it('should allow legitimate session-based profile access for valid active sessions', async () => {
+      const res = await request(app)
+        .get('/api/profile')
+        .set('Authorization', `Bearer ${validSessionToken}`);
+      
+      expect(res.status).toBe(200);
+      expect(res.body.profile.email).toBe(regressionUser.email);
+    });
+
+    it('should reject milestone updates with 400 when required fields are missing', async () => {
+      const res = await request(app)
+        .post('/api/skills/gap/milestone')
+        .set('Authorization', `Bearer ${validSessionToken}`)
+        .send({ projectId: 'ai-healthcare-assistant' }); // missing skill / milestoneId
+      
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('required');
+    });
+
+    it('should correctly persist learning milestones using either skill or milestoneId property', async () => {
+      const testProjectId = 'test-ai-capstone';
+
+      // 1. Mark completed using "skill"
+      const res1 = await request(app)
+        .post('/api/skills/gap/milestone')
+        .set('Authorization', `Bearer ${validSessionToken}`)
+        .send({
+          projectId: testProjectId,
+          skill: 'Python AsyncIO',
+          completed: true
+        });
+      
+      expect(res1.status).toBe(200);
+      expect(res1.body.success).toBe(true);
+      expect(res1.body.completedMilestones).toContain('Python AsyncIO');
+
+      // 2. Mark completed using "milestoneId" (as sent by SkillGapAnalysisView)
+      const res2 = await request(app)
+        .post('/api/skills/gap/milestone')
+        .set('Authorization', `Bearer ${validSessionToken}`)
+        .send({
+          projectId: testProjectId,
+          milestoneId: 'Docker Production Setup',
+          completed: true
+        });
+      
+      expect(res2.status).toBe(200);
+      expect(res2.body.completedMilestones).toContain('Docker Production Setup');
+      expect(res2.body.completedMilestones).toContain('Python AsyncIO');
+
+      // 3. Toggle completion off
+      const res3 = await request(app)
+        .post('/api/skills/gap/milestone')
+        .set('Authorization', `Bearer ${validSessionToken}`)
+        .send({
+          projectId: testProjectId,
+          skill: 'Python AsyncIO',
+          completed: false
+        });
+      
+      expect(res3.status).toBe(200);
+      expect(res3.body.completedMilestones).not.toContain('Python AsyncIO');
+      expect(res3.body.completedMilestones).toContain('Docker Production Setup');
     });
   });
 });

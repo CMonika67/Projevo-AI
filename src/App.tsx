@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { ScreenType, UserProfile, ProjectData, HealthCategory, CriticalIssue } from './types';
 import {
   initialProfile,
+  emptyProfile,
   currentProject,
   defaultHealthCategories,
   defaultCriticalIssues,
@@ -17,6 +18,7 @@ import { DashboardView } from './components/DashboardView';
 import { LoginView } from './components/LoginView';
 import { HealthReportView } from './components/HealthReportView';
 import { AdaptiveSupportView } from './components/AdaptiveSupportView';
+import { SkillGapAnalysisView } from './components/SkillGapAnalysisView';
 import { OnboardingView } from './components/OnboardingView';
 import { ProjectDoctorView } from './components/ProjectDoctorView';
 import { ProjectDiscoveryView } from './components/ProjectDiscoveryView';
@@ -25,10 +27,62 @@ import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
 import { safeApiFetch } from './api';
 
+// Utility helpers to synchronize URL paths with ScreenType
+function getScreenFromPath(pathname: string): ScreenType {
+  const clean = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  switch (clean) {
+    case '':
+    case 'dashboard':
+      return 'dashboard';
+    case 'login':
+      return 'login';
+    case 'doctor':
+      return 'doctor';
+    case 'health-report':
+      return 'health-report';
+    case 'skill-gap':
+      return 'skill-gap';
+    case 'adaptive-support':
+      return 'adaptive-support';
+    case 'discovery':
+      return 'discovery';
+    case 'interview-prep':
+      return 'interview-prep';
+    case 'profile':
+    case 'settings':
+      return 'profile';
+    case 'onboarding':
+      return 'onboarding';
+    default:
+      return 'dashboard';
+  }
+}
+
+function getPathForScreen(screen: ScreenType): string {
+  switch (screen) {
+    case 'dashboard':
+      return '/';
+    case 'login':
+      return '/login';
+    default:
+      return `/${screen}`;
+  }
+}
+
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isValidatingSession, setIsValidatingSession] = useState<boolean>(true);
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>(() => {
+    return getScreenFromPath(window.location.pathname);
+  });
+
+  const [profile, setProfile] = useState<UserProfile>(emptyProfile);
+  const [project, setProject] = useState<ProjectData | null>(null);
+  const [categories, setCategories] = useState<HealthCategory[]>([]);
+  const [criticalIssues, setCriticalIssues] = useState<CriticalIssue[]>([]);
+  const [metrics] = useState(defaultStruggleMetrics);
+  const [isIdeaModalOpen, setIsIdeaModalOpen] = useState(false);
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -41,85 +95,274 @@ export default function App() {
     } catch (e) {
       console.error('Logout error:', e);
     }
+    // Sign-out must clear the session and redirect to Login
     localStorage.removeItem('token');
     setIsAuthenticated(false);
-    setProfile(initialProfile);
-    setProject(currentProject);
-    setCategories(defaultHealthCategories);
-    setCriticalIssues(defaultCriticalIssues);
+    setProfile(emptyProfile);
+    setProject(null);
+    setCategories([]);
+    setCriticalIssues([]);
     setCurrentScreen('login');
+    if (window.location.pathname !== '/login') {
+      window.history.replaceState(null, '', '/login');
+    }
   };
 
   const changeScreen = (screen: ScreenType) => {
     if (screen === 'login') {
+      if (isAuthenticated) {
+        // If an authenticated user triggers or navigates to login, redirect to Dashboard (Requirement 5)
+        window.history.replaceState(null, '', '/');
+        setCurrentScreen('dashboard');
+        return;
+      }
       handleLogout();
       return;
     }
-    if (!localStorage.getItem('token') && screen !== 'onboarding') {
-      handleLogout();
-      return;
-    }
-    setCurrentScreen(screen);
-  };
-  const [profile, setProfile] = useState<UserProfile>(initialProfile);
-  const [project, setProject] = useState<ProjectData>(currentProject);
-  const [categories, setCategories] = useState<HealthCategory[]>(defaultHealthCategories);
-  const [criticalIssues, setCriticalIssues] = useState<CriticalIssue[]>(defaultCriticalIssues);
-  const [metrics] = useState(defaultStruggleMetrics);
-  const [isIdeaModalOpen, setIsIdeaModalOpen] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(3);
-  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
 
-  // Check session validity on startup/refresh
+    // Protected pages guard: Users must not access Dashboard or protected pages without an authenticated session (Requirement 2)
+    if (!isAuthenticated || !localStorage.getItem('token')) {
+      handleLogout();
+      return;
+    }
+
+    setCurrentScreen(screen);
+    const targetPath = getPathForScreen(screen);
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState(null, '', targetPath);
+    }
+  };
+
+  // Check session validity on startup/refresh & handle OAuth callbacks
   useEffect(() => {
+    let isCancelled = false;
+
     async function checkSession() {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      // 1. Check for URL redirect errors (e.g. expired or invalid magic links/OAuth)
+      let urlErrorDesc: string | null = null;
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        urlErrorDesc = hashParams.get('error_description') || hashParams.get('error');
+      }
+      const searchParams = new URLSearchParams(window.location.search);
+      if (!urlErrorDesc) {
+        urlErrorDesc = searchParams.get('error_description') || searchParams.get('error');
+      }
+
+      if (urlErrorDesc) {
+        const decodedError = decodeURIComponent(urlErrorDesc);
+        window.history.replaceState(null, '', `/login?error=${encodeURIComponent(decodedError)}`);
         setIsAuthenticated(false);
         setIsValidatingSession(false);
         setCurrentScreen('login');
         return;
       }
+
+      // 2. Process Supabase hash fragment (#access_token=...&type=recovery|magiclink|signup)
+      if (window.location.hash.includes('access_token=')) {
+        try {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const hashToken = hashParams.get('access_token');
+          const hashType = hashParams.get('type');
+
+          if (hashType === 'recovery' && hashToken) {
+            setRecoveryToken(hashToken);
+            setIsAuthenticated(false);
+            setIsValidatingSession(false);
+            setCurrentScreen('login');
+            return;
+          }
+
+          if (hashToken) {
+            localStorage.setItem('token', hashToken);
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        } catch (e) {
+          console.error('Error parsing OAuth/magic link hash token:', e);
+        }
+      }
+
+      // 3. Process Password Recovery query parameter (?type=recovery)
+      if (searchParams.get('type') === 'recovery') {
+        const queryToken = searchParams.get('token') || searchParams.get('access_token');
+        if (queryToken) {
+          setRecoveryToken(queryToken);
+          setIsAuthenticated(false);
+          setIsValidatingSession(false);
+          setCurrentScreen('login');
+          return;
+        }
+      }
+
+      // 4. Process Supabase Magic Link / Email verification token_hash (?token_hash=...)
+      const tokenHash = searchParams.get('token_hash');
+      const tokenType = searchParams.get('type') || 'email';
+      if (tokenHash) {
+        try {
+          const data = await safeApiFetch('/api/auth/verify-token-hash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token_hash: tokenHash, type: tokenType })
+          });
+          if (data?.token) {
+            localStorage.setItem('token', data.token);
+            if (data.profile) setProfile(data.profile);
+            if (data.project) setProject(data.project);
+            setIsAuthenticated(true);
+            window.history.replaceState(null, '', '/');
+            setCurrentScreen('dashboard');
+            setIsValidatingSession(false);
+            return;
+          }
+        } catch (e: any) {
+          console.error('Error verifying token_hash:', e);
+          const errMsg = e.message || 'Verification link has expired or is invalid.';
+          window.history.replaceState(null, '', `/login?error=${encodeURIComponent(errMsg)}`);
+          setIsAuthenticated(false);
+          setIsValidatingSession(false);
+          setCurrentScreen('login');
+          return;
+        }
+      }
+
+      // 5. Process Supabase PKCE / OAuth authorization code (?code=...)
+      const authCode = searchParams.get('code');
+      if (authCode) {
+        try {
+          const data = await safeApiFetch('/api/auth/callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ code: authCode })
+          });
+          if (data?.token) {
+            localStorage.setItem('token', data.token);
+            if (data.profile) setProfile(data.profile);
+            if (data.project) setProject(data.project);
+            setIsAuthenticated(true);
+            window.history.replaceState(null, '', '/');
+            setCurrentScreen('dashboard');
+            setIsValidatingSession(false);
+            return;
+          }
+        } catch (e: any) {
+          console.error('Error exchanging authorization code:', e);
+          const errMsg = e.message || 'Sign-in link or authorization code is invalid or expired.';
+          window.history.replaceState(null, '', `/login?error=${encodeURIComponent(errMsg)}`);
+          setIsAuthenticated(false);
+          setIsValidatingSession(false);
+          setCurrentScreen('login');
+          return;
+        }
+      }
+
+      // 2. Validate current token against real Supabase / backend session (/api/auth/me)
+      const token = localStorage.getItem('token');
+      if (!token) {
+        if (!isCancelled) {
+          setIsAuthenticated(false);
+          setProfile(emptyProfile);
+          setProject(null);
+          setCurrentScreen('login');
+          // When a logged-out user opens the root URL (/), show Login page (Requirement 1)
+          if (window.location.pathname !== '/login') {
+            window.history.replaceState(null, '', '/login');
+          }
+          setIsValidatingSession(false);
+        }
+        return;
+      }
+
       try {
         const data = await safeApiFetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` },
           credentials: 'include'
         });
+
+        if (isCancelled) return;
+
         if (data.profile) {
           setProfile(data.profile);
         }
-        if (data.project) {
-          setProject(data.project);
-        }
-        
-        // Also fetch the full profile analytics info to populate categories & issues
+        setProject(data.project || null);
+
+        // Fetch full profile analytics info to populate categories & issues
         try {
           const profileData = await safeApiFetch('/api/profile', {
             headers: { 'Authorization': `Bearer ${token}` },
             credentials: 'include'
           });
+          if (profileData && profileData.profile) {
+            setProfile(profileData.profile);
+          }
+          if (profileData && profileData.project !== undefined) {
+            setProject(profileData.project || null);
+          }
           if (profileData && profileData.latestAnalysis) {
-            setCategories(profileData.latestAnalysis.categories);
-            setCriticalIssues(profileData.latestAnalysis.criticalIssues);
+            setCategories(profileData.latestAnalysis.categories || []);
+            setCriticalIssues(profileData.latestAnalysis.criticalIssues || []);
           }
         } catch {
           // If profile fetch fails, keep current profile
         }
 
         setIsAuthenticated(true);
-        setCurrentScreen('dashboard');
+
+        // If a logged-in user opens the Login page, redirect them to the Dashboard (Requirement 5)
+        const targetScreen = getScreenFromPath(window.location.pathname);
+        if (targetScreen === 'login') {
+          window.history.replaceState(null, '', '/');
+          setCurrentScreen('dashboard');
+        } else {
+          setCurrentScreen(targetScreen);
+          const expectedPath = getPathForScreen(targetScreen);
+          if (window.location.pathname !== expectedPath) {
+            window.history.replaceState(null, '', expectedPath);
+          }
+        }
       } catch (err) {
         console.error('Session validation failed:', err);
-        localStorage.removeItem('token');
-        setIsAuthenticated(false);
-        setProfile(initialProfile);
-        setProject(currentProject);
-        setCurrentScreen('login');
+        if (!isCancelled) {
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setProfile(emptyProfile);
+          setProject(null);
+          setCurrentScreen('login');
+          if (window.location.pathname !== '/login') {
+            window.history.replaceState(null, '', '/login');
+          }
+        }
       } finally {
-        setIsValidatingSession(false);
+        if (!isCancelled) {
+          setIsValidatingSession(false);
+        }
       }
     }
+
     checkSession();
+
+    // Listen to browser Back/Forward navigation
+    const handlePopState = () => {
+      const screenFromUrl = getScreenFromPath(window.location.pathname);
+      const hasToken = Boolean(localStorage.getItem('token'));
+      if (!hasToken) {
+        if (window.location.pathname !== '/login') {
+          window.history.replaceState(null, '', '/login');
+        }
+        setCurrentScreen('login');
+      } else if (screenFromUrl === 'login') {
+        window.history.replaceState(null, '', '/');
+        setCurrentScreen('dashboard');
+      } else {
+        setCurrentScreen(screenFromUrl);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      isCancelled = true;
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const handleUpdateProfile = async (updated: Partial<UserProfile>) => {
@@ -150,7 +393,7 @@ export default function App() {
     }
   };
 
-  // If we are currently validating a session on reload, display a premium loading state matching the theme
+  // If we are currently validating a session on reload, display a premium loading state matching the theme (Requirement 7)
   if (isValidatingSession) {
     return (
       <div className="min-h-screen bg-[#FAF9F4] flex flex-col items-center justify-center font-['Manrope']">
@@ -162,30 +405,39 @@ export default function App() {
     );
   }
 
-  // Route guard: if unauthenticated, show the Login screen
+  // Route guard: if unauthenticated, show the Login screen (Requirements 1 & 2)
   if (!isAuthenticated) {
     return (
       <LoginView
+        initialRecoveryToken={recoveryToken}
         onLoginSuccess={(email, token, userProfile, userProject) => {
           localStorage.setItem('token', token);
           setIsAuthenticated(true);
-          if (userProfile) {
-            setProfile(userProfile);
-          }
-          if (userProject) {
-            setProject(userProject);
-          }
+          setProfile(userProfile || emptyProfile);
+          setProject(userProject || null);
+          // Redirect to Dashboard after successful sign in (Requirement 3)
+          window.history.replaceState(null, '', '/');
+          setCurrentScreen('dashboard');
+
           // Fetch analytics for this user
           safeApiFetch('/api/profile', {
             headers: { 'Authorization': `Bearer ${token}` },
             credentials: 'include'
           }).then(pData => {
+            if (pData?.profile) {
+              setProfile(pData.profile);
+            }
+            if (pData && pData.project !== undefined) {
+              setProject(pData.project);
+            }
             if (pData?.latestAnalysis) {
-              setCategories(pData.latestAnalysis.categories);
-              setCriticalIssues(pData.latestAnalysis.criticalIssues);
+              setCategories(pData.latestAnalysis.categories || []);
+              setCriticalIssues(pData.latestAnalysis.criticalIssues || []);
+            } else {
+              setCategories([]);
+              setCriticalIssues([]);
             }
           }).catch(() => {});
-          setCurrentScreen('dashboard');
         }}
         onNavigate={changeScreen}
       />
@@ -223,33 +475,57 @@ export default function App() {
     );
   }
 
-  const handleSelectNewProject = async (title: string, stack: string[]) => {
-    const updatedProject = {
-      id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      title,
-      tagline: `Student project built with ${stack.join(', ')}`,
-      status: 'In Progress',
-      matchScore: 94,
-      healthScore: 92,
-      readinessScore: 40,
-      stage: 'Planning & Initial Scaffolding',
-      stageProgress: 20,
-      techStack: stack,
-      issuesCount: 0
-    };
+  const handleSelectNewProject = async (titleOrProject: string | Partial<ProjectData>, stack?: string[]) => {
+    let updatedProject: ProjectData;
+    if (typeof titleOrProject === 'object') {
+      updatedProject = {
+        id: titleOrProject.id || ('proj_' + Date.now()),
+        title: titleOrProject.title || 'Untitled Project',
+        tagline: titleOrProject.tagline || '',
+        domain: titleOrProject.domain,
+        difficulty: titleOrProject.difficulty,
+        problemStatement: titleOrProject.problemStatement,
+        proposedSolution: titleOrProject.proposedSolution,
+        expectedOutcome: titleOrProject.expectedOutcome,
+        possibleExtensions: titleOrProject.possibleExtensions,
+        feasibility: titleOrProject.feasibility,
+        whyRelevant: titleOrProject.whyRelevant,
+        status: titleOrProject.status || 'In Progress',
+        matchScore: titleOrProject.matchScore || 88,
+        healthScore: titleOrProject.healthScore || 85,
+        readinessScore: titleOrProject.readinessScore || 45,
+        stage: titleOrProject.stage || 'Requirements & Architecture',
+        stageProgress: titleOrProject.stageProgress || 25,
+        techStack: titleOrProject.techStack || stack || [],
+        issuesCount: titleOrProject.issuesCount || 0
+      };
+    } else {
+      updatedProject = {
+        id: 'proj_' + Date.now(),
+        title: titleOrProject,
+        tagline: `Student project built with ${(stack || []).join(', ')}`,
+        status: 'In Progress',
+        matchScore: 90,
+        healthScore: 85,
+        readinessScore: 40,
+        stage: 'Planning & Initial Scaffolding',
+        stageProgress: 20,
+        techStack: stack || [],
+        issuesCount: 0
+      };
+    }
 
     setProject(updatedProject);
 
     try {
       const token = localStorage.getItem('token');
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ project: updatedProject })
       });
       if (res.ok) {
@@ -270,11 +546,51 @@ export default function App() {
   }) => {
     setCategories(data.categories);
     setCriticalIssues(data.criticalIssues);
-    setProject((prev) => ({ 
-      ...prev, 
-      healthScore: data.overallHealth,
-      issuesCount: data.criticalIssues.length
-    }));
+
+    const healthReportObj = {
+      overallHealth: data.overallHealth,
+      categories: data.categories,
+      criticalIssues: data.criticalIssues,
+      analyzedAt: new Date().toISOString()
+    };
+
+    setProject((prev) => {
+      const updated: ProjectData = prev ? {
+        ...prev,
+        healthScore: data.overallHealth,
+        issuesCount: data.criticalIssues.length,
+        healthReport: healthReportObj
+      } : {
+        id: 'proj_' + Date.now(),
+        title: 'Diagnosed Project',
+        tagline: 'Custom analyzed codebase',
+        status: 'In Progress',
+        matchScore: 88,
+        healthScore: data.overallHealth,
+        readinessScore: 60,
+        stage: 'Diagnosis & Refactoring',
+        stageProgress: 35,
+        techStack: ['Python'],
+        issuesCount: data.criticalIssues.length,
+        healthReport: healthReportObj
+      };
+
+      // Persist genuine report to backend
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          credentials: 'include',
+          body: JSON.stringify({
+            project: updated,
+            latestAnalysis: healthReportObj
+          })
+        }).catch(err => console.error('Error persisting diagnosis:', err));
+      }
+
+      return updated;
+    });
   };
 
   return (
@@ -308,79 +624,17 @@ export default function App() {
             {/* Quick Idea Analyzer Button in Header */}
             <button
               onClick={() => setIsIdeaModalOpen(true)}
-              className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 bg-[#D6E6E0] hover:bg-[#BACAC4] text-[#005144] rounded-full text-[12px] font-bold font-['Inter'] transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3.5 py-1.5 bg-[#D6E6E0] hover:bg-[#BACAC4] text-[#005144] rounded-full text-[12px] font-bold font-['Inter'] transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">lightbulb</span>
               <span>Analyze Idea</span>
             </button>
 
-            {/* Quick Switch to Doctor */}
-            <button
-              onClick={() => changeScreen('doctor')}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#F5F4EF] border border-[#BEC9C4]/50 rounded-lg text-[12px] font-bold font-['Inter'] text-[#005144] transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">medical_services</span>
-              <span>Project Doctor</span>
-            </button>
-
-            {/* Notifications Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotificationPopup(!showNotificationPopup)}
-                className="w-10 h-10 rounded-full bg-white border border-[#BEC9C4]/40 flex items-center justify-center text-[#53615D] hover:text-[#005144] hover:border-[#005144] transition-colors relative cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[20px]">notifications</span>
-                {notificationCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#D95F59] rounded-full border-2 border-white"></span>
-                )}
-              </button>
-
-              {showNotificationPopup && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl p-4 bento-shadow border border-[#BEC9C4]/40 z-50 animate-fadeIn">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-[14px] font-bold font-['Manrope'] text-[#005144]">
-                      Alerts &amp; Updates
-                    </h4>
-                    <button
-                      onClick={() => {
-                        setNotificationCount(0);
-                        setShowNotificationPopup(false);
-                      }}
-                      className="text-[11px] text-[#6F7975] hover:underline"
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                  <div className="space-y-2.5 text-[12px]">
-                    <div
-                      onClick={() => {
-                        changeScreen('health-report');
-                        setShowNotificationPopup(false);
-                      }}
-                      className="p-2.5 bg-[#FFDAD3]/40 rounded-xl cursor-pointer hover:bg-[#FFDAD3]/60 transition-colors"
-                    >
-                      <p className="font-bold text-[#7C2E1D]">Brute-Force Risk Detected</p>
-                      <p className="text-[#3F4945]">Missing rate limiter on login endpoint line 42.</p>
-                    </div>
-                    <div
-                      onClick={() => {
-                        changeScreen('adaptive-support');
-                        setShowNotificationPopup(false);
-                      }}
-                      className="p-2.5 bg-[#D6E6E0]/40 rounded-xl cursor-pointer hover:bg-[#D6E6E0]/60 transition-colors"
-                    >
-                      <p className="font-bold text-[#005144]">Adaptive Hint Ready</p>
-                      <p className="text-[#3F4945]">Unblock your data_processor.py NameError.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* User Avatar Click to Profile */}
             <div
               onClick={() => changeScreen('profile')}
               className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-white/80 transition-colors"
+              title="View Profile & Settings"
             >
               <img
                 src={profile.avatar}
@@ -388,16 +642,6 @@ export default function App() {
                 className="w-9 h-9 rounded-full object-cover border border-[#BEC9C4]"
               />
             </div>
-
-            {/* Sign Out Button in Header */}
-            <button
-              onClick={handleLogout}
-              title="Sign Out"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#FFDAD3]/50 text-[#7C2E1D] border border-[#BEC9C4]/40 hover:border-[#FFB4A4] rounded-lg text-[12px] font-bold font-['Inter'] transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[16px]">logout</span>
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
           </div>
         </header>
 
@@ -416,21 +660,25 @@ export default function App() {
             <HealthReportView
               categories={categories}
               criticalIssues={criticalIssues}
-              overallScore={project.healthScore}
+              overallScore={project ? project.healthScore : 80}
               onNavigate={changeScreen}
-              onOpenAdaptiveSupport={() => changeScreen('adaptive-support')}
+              onOpenAdaptiveSupport={() => changeScreen('skill-gap')}
             />
           )}
 
-          {currentScreen === 'adaptive-support' && (
-            <AdaptiveSupportView
-              metrics={metrics}
+          {(currentScreen === 'skill-gap' || currentScreen === 'adaptive-support') && (
+            <SkillGapAnalysisView
+              project={project}
+              profile={profile}
               onNavigate={changeScreen}
+              onUpdateProfile={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
+              onSelectProject={handleSelectNewProject}
             />
           )}
 
           {currentScreen === 'doctor' && (
             <ProjectDoctorView
+              currentProject={project}
               onNavigate={changeScreen}
               onDiagnosticComplete={handleDiagnosticComplete}
             />
@@ -438,6 +686,8 @@ export default function App() {
 
           {currentScreen === 'discovery' && (
             <ProjectDiscoveryView
+              profile={profile}
+              currentProject={project}
               onNavigate={changeScreen}
               onSelectProject={handleSelectNewProject}
             />
@@ -445,7 +695,7 @@ export default function App() {
 
           {currentScreen === 'interview-prep' && (
             <InterviewPrepView
-              projectTitle={project.title}
+              currentProject={project}
               onNavigate={changeScreen}
             />
           )}
@@ -455,6 +705,7 @@ export default function App() {
               profile={profile}
               onUpdateProfile={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
               onNavigate={changeScreen}
+              onLogout={handleLogout}
             />
           )}
         </main>
