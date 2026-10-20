@@ -119,7 +119,10 @@ app.use((req, res, next) => {
         'http://127.0.0.1:3000',
         appUrl
       ].filter(Boolean);
-      if (!allowed.includes(origin)) {
+      const isVercelOrigin =
+        origin.endsWith('.vercel.app') ||
+        (typeof req.headers.host === 'string' && origin.includes(req.headers.host));
+      if (!allowed.includes(origin) && !isVercelOrigin) {
         return res.status(403).json({ error: 'Forbidden: Invalid request origin' });
       }
     }
