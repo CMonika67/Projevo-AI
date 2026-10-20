@@ -25,7 +25,9 @@ import { ProjectDiscoveryView } from './components/ProjectDiscoveryView';
 import { InterviewPrepView } from './components/InterviewPrepView';
 import { ProfileSettingsView } from './components/ProfileSettingsView';
 import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
+import { UserAvatar } from './components/UserAvatar';
 import { safeApiFetch } from './api';
+import { firebaseSignOut } from './firebase';
 
 // Utility helpers to synchronize URL paths with ScreenType
 function getScreenFromPath(pathname: string): ScreenType {
@@ -86,12 +88,11 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
       await safeApiFetch('/api/auth/logout', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include'
       });
+      await firebaseSignOut();
     } catch (e) {
       console.error('Logout error:', e);
     }
@@ -275,7 +276,7 @@ export default function App() {
 
       try {
         const data = await safeApiFetch('/api/auth/me', {
-          headers: { 'Authorization': `Bearer ${token}` },
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           credentials: 'include'
         });
 
@@ -289,7 +290,7 @@ export default function App() {
         // Fetch full profile analytics info to populate categories & issues
         try {
           const profileData = await safeApiFetch('/api/profile', {
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             credentials: 'include'
           });
           if (profileData && profileData.profile) {
@@ -369,23 +370,15 @@ export default function App() {
     try {
       setProfile((prev) => ({ ...prev, ...updated }));
       
-      const token = localStorage.getItem('token');
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const res = await fetch('/api/profile', {
+      const res = await safeApiFetch('/api/profile', {
         method: 'POST',
-        headers,
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data.profile);
-        if (data.project) {
-          setProject(data.project);
+      if (res && res.profile) {
+        setProfile(res.profile);
+        if (res.project) {
+          setProject(res.project);
         }
       }
     } catch (err) {
@@ -410,18 +403,24 @@ export default function App() {
     return (
       <LoginView
         initialRecoveryToken={recoveryToken}
-        onLoginSuccess={(email, token, userProfile, userProject) => {
-          localStorage.setItem('token', token);
+        onLoginSuccess={(email: string, token: any, userProfile?: any, userProject?: any) => {
+          const effectiveToken = typeof token === 'string' ? token : (typeof userProject === 'string' ? userProject : localStorage.getItem('token') || '');
+          const effectiveProfile = typeof token === 'object' && token !== null ? token : (userProfile || emptyProfile);
+          const effectiveProject = typeof userProfile === 'object' && userProfile !== null && !userProfile.email && !userProfile.name ? userProfile : (userProject || null);
+
+          if (effectiveToken) {
+            localStorage.setItem('token', effectiveToken);
+          }
           setIsAuthenticated(true);
-          setProfile(userProfile || emptyProfile);
-          setProject(userProject || null);
+          setProfile(effectiveProfile);
+          setProject(effectiveProject);
           // Redirect to Dashboard after successful sign in (Requirement 3)
           window.history.replaceState(null, '', '/');
           setCurrentScreen('dashboard');
 
           // Fetch analytics for this user
           safeApiFetch('/api/profile', {
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: effectiveToken ? { 'Authorization': `Bearer ${effectiveToken}` } : {},
             credentials: 'include'
           }).then(pData => {
             if (pData?.profile) {
@@ -636,10 +635,10 @@ export default function App() {
               className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-white/80 transition-colors"
               title="View Profile & Settings"
             >
-              <img
+              <UserAvatar
                 src={profile.avatar}
-                alt={profile.name}
-                className="w-9 h-9 rounded-full object-cover border border-[#BEC9C4]"
+                name={profile.name}
+                className="w-9 h-9 border border-[#BEC9C4]"
               />
             </div>
           </div>

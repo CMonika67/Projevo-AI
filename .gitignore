@@ -6,5 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
-server_db.json
-server_db_test.json
+server_db*.json*

@@ -7,9 +7,13 @@ export async function safeApiFetch<T = any>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
+  const mergedOptions: RequestInit = {
+    credentials: 'include',
+    ...options,
+  };
   let res: Response;
   try {
-    res = await fetch(url, options);
+    res = await fetch(url, mergedOptions);
   } catch (netErr: any) {
     throw new Error('Network error. Please check your internet connection.');
   }

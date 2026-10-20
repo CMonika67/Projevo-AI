@@ -109,7 +109,7 @@ export const InterviewPrepView: React.FC<InterviewPrepViewProps> = ({
 
       const res = await fetch('/api/interview-prep/guide', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         signal: abortController.signal,
         body: JSON.stringify({

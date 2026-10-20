@@ -30,6 +30,7 @@ export interface UserProfile {
   yearOfStudy?: string;
   graduationYear?: string;
   github?: string;
+  githubUsername?: string;
   skills: UserSkill[];
   selectedInterests: string[];
   interestedRoles?: string[];

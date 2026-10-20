@@ -66,13 +66,9 @@ export const IdeaAnalyzerModal: React.FC<IdeaAnalyzerModalProps> = ({
     const clientTimeoutId = setTimeout(() => abortController.abort(), 25000);
 
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/analyze-idea', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         signal: abortController.signal,
         body: JSON.stringify({

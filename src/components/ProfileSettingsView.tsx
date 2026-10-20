@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile, ScreenType, UserSkill } from '../types';
+import { UserAvatar } from './UserAvatar';
 
 interface ProfileSettingsViewProps {
   profile: UserProfile;
@@ -71,7 +72,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
   const [college, setCollege] = useState(profile.college || profile.university || '');
   const [course, setCourse] = useState(profile.course || '');
   const [yearOfStudy, setYearOfStudy] = useState(profile.yearOfStudy || profile.graduationYear || '4th Year');
-  const [github, setGithub] = useState(profile.github || '');
+  const [github, setGithub] = useState(profile.github || profile.githubUsername || '');
   const [githubError, setGithubError] = useState<string | null>(null);
 
   // User Skills state
@@ -90,7 +91,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
       setCollege(profile.college || profile.university || '');
       setCourse(profile.course || '');
       setYearOfStudy(profile.yearOfStudy || profile.graduationYear || '');
-      setGithub(profile.github || '');
+      setGithub(profile.github || profile.githubUsername || '');
       setSkills(profile.skills || []);
       setSelectedInterests(profile.selectedInterests || []);
       setInterestedRoles(profile.interestedRoles || []);
@@ -291,10 +292,8 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
     formData.append('avatar', file);
 
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include',
         body: formData
       });
@@ -313,10 +312,8 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
 
   const handleRemoveAvatar = async () => {
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('/api/profile/avatar/reset', {
         method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         credentials: 'include'
       });
       if (res.ok) {
@@ -373,11 +370,12 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Profile Card */}
         <div className="bg-white rounded-2xl p-6 md:p-8 bento-shadow border border-[#BEC9C4]/40 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#005144] p-0.5 mb-4 shadow-sm relative group">
-            <img
-              src={avatarPreview || profile.avatar || MONIKA_AVATAR}
-              alt={profile.name || 'User avatar'}
-              className="w-full h-full object-cover rounded-full"
+          <div className="w-24 h-24 rounded-full border-2 border-[#005144] p-0.5 mb-4 shadow-sm relative group overflow-hidden">
+            <UserAvatar
+              src={avatarPreview || profile.avatar}
+              name={name || profile.name}
+              className="w-full h-full"
+              fontSize="text-[36px] font-extrabold"
             />
             <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-full flex flex-col items-center justify-center text-white text-[11px] font-bold cursor-pointer transition-opacity">
               <span className="material-symbols-outlined text-[20px] mb-0.5">photo_camera</span>
@@ -403,7 +401,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
                   accept="image/png, image/jpeg, image/jpg"
                 />
               </label>
-              {profile.avatar && profile.avatar !== MONIKA_AVATAR && (
+              {(profile.avatar || avatarPreview) && (
                 <button
                   type="button"
                   onClick={handleRemoveAvatar}
@@ -440,15 +438,15 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({
             </div>
             <div className="flex items-center justify-between text-[13px]">
               <span className="text-[#6F7975]">GitHub Account</span>
-              {github ? (
+              {github || profile.githubUsername ? (
                 <a
-                  href={normalizeGitHubUrl(github)}
+                  href={normalizeGitHubUrl(github || profile.githubUsername || '')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-bold text-[#176B5B] hover:underline flex items-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[15px]">open_in_new</span>
-                  {github.replace(/^https?:\/\/github\.com\//, '@')}
+                  {(github || profile.githubUsername || '').replace(/^https?:\/\/github\.com\//, '@')}
                 </a>
               ) : (
                 <span className="text-[#707974] italic">Not connected</span>
