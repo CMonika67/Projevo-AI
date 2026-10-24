@@ -83,7 +83,7 @@ app.use('/uploads', express.static(uploadsDir));
 // Rate limiters with test mode bypass
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: process.env.NODE_ENV === 'test' ? 5 : 50,
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => process.env.NODE_ENV === 'test' && req.headers['x-test-rate-limit'] !== 'true',

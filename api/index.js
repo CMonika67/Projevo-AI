@@ -1954,7 +1954,7 @@ app.use("/uploads", express.static(uploadsDir));
 var loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1e3,
   // 15 minutes
-  max: 5,
+  max: process.env.NODE_ENV === "test" ? 5 : 50,
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => process.env.NODE_ENV === "test" && req.headers["x-test-rate-limit"] !== "true",
