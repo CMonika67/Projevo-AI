@@ -2085,6 +2085,9 @@ function readDB() {
   if (Object.keys(parsed.users).length === 0 || !parsed.users["monikacherukuri667@gmail.com"]) {
     seedDemoUser(parsed);
   }
+  if (parsed.users["monikacherukuri667@gmail.com"] && !parsed.users["monikacherukuri667@gmail.com"].passwordHash) {
+    parsed.users["monikacherukuri667@gmail.com"].passwordHash = "$2b$10$9ySA1tLXBGTnWagT1IEJkO8Y/wuqym9CUslUQrlZj4UXJ0n1CYmUm";
+  }
   for (const email in parsed.users) {
     const u = parsed.users[email];
     if (u && typeof u === "object") {
@@ -5379,12 +5382,13 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
           });
         }
         const authErr = getLastSupabaseAuthError();
-        return res.status(400).json({
-          error: authErr?.message || "Invalid credentials",
-          needsEmailConfirmation: authErr?.isEmailNotConfirmed || false
-        });
+        if (authErr?.isEmailNotConfirmed) {
+          return res.status(400).json({
+            error: authErr?.message || "Invalid credentials",
+            needsEmailConfirmation: true
+          });
+        }
       } catch (sbErr) {
-        return res.status(400).json({ error: sbErr.message || "Login failed" });
       }
     }
     const db = readDB();

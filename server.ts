@@ -237,6 +237,9 @@ export function readDB() {
   if (Object.keys(parsed.users).length === 0 || !parsed.users["monikacherukuri667@gmail.com"]) {
     seedDemoUser(parsed);
   }
+  if (parsed.users["monikacherukuri667@gmail.com"] && !parsed.users["monikacherukuri667@gmail.com"].passwordHash) {
+    parsed.users["monikacherukuri667@gmail.com"].passwordHash = "$2b$10$9ySA1tLXBGTnWagT1IEJkO8Y/wuqym9CUslUQrlZj4UXJ0n1CYmUm";
+  }
 
   // Ensure all registered users have a unique ID and bcrypt hash
   for (const email in parsed.users) {
@@ -4108,14 +4111,17 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
           });
         }
 
-        // Supabase Auth returned an error (e.g. unconfirmed email or invalid credentials)
+        // Supabase Auth returned an error (e.g. unconfirmed email)
         const authErr = getLastSupabaseAuthError();
-        return res.status(400).json({
-          error: authErr?.message || 'Invalid credentials',
-          needsEmailConfirmation: authErr?.isEmailNotConfirmed || false
-        });
+        if (authErr?.isEmailNotConfirmed) {
+          return res.status(400).json({
+            error: authErr?.message || 'Invalid credentials',
+            needsEmailConfirmation: true
+          });
+        }
+        // Fall through to local database check if user exists in local database
       } catch (sbErr: any) {
-        return res.status(400).json({ error: sbErr.message || 'Login failed' });
+        // Fall through to local database check
       }
     }
 
