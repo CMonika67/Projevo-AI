@@ -206,9 +206,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
       }
     }
 
-    // Default: Supabase Google OAuth centered popup with redirect fallback
     try {
-      const redirectUri = window.location.origin + '/login';
+      const currentOrigin = typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production' ? 'https://projevo-ai.vercel.app' : 'http://localhost:3000');
+      const redirectUri = `${currentOrigin}/login`;
       let oauthUrl: string | null = null;
 
       // 1. Initiate via client Supabase so PKCE code verifier is written into browser localStorage

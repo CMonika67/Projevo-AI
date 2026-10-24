@@ -36,6 +36,7 @@ function getScreenFromPath(pathname: string): ScreenType {
   switch (clean) {
     case '':
     case 'dashboard':
+    case 'auth/callback':
       return 'dashboard';
     case 'login':
       return 'login';
@@ -281,10 +282,18 @@ export default function App() {
           const sb = getSupabase();
           if (sb) {
             try {
-              const { data: exchangeData, error: exchangeErr } = await sb.auth.exchangeCodeForSession(authCode);
-              if (!exchangeErr && exchangeData?.session?.access_token) {
-                authToken = exchangeData.session.access_token;
-                authEmail = exchangeData.session.user?.email || '';
+              // 1. Check if session was already established/detected by Supabase client
+              const { data: sessionData } = await sb.auth.getSession();
+              if (sessionData?.session?.access_token) {
+                authToken = sessionData.session.access_token;
+                authEmail = sessionData.session.user?.email || '';
+              } else {
+                // 2. Otherwise exchange code explicitly using browser's stored PKCE verifier
+                const { data: exchangeData, error: exchangeErr } = await sb.auth.exchangeCodeForSession(authCode);
+                if (!exchangeErr && exchangeData?.session?.access_token) {
+                  authToken = exchangeData.session.access_token;
+                  authEmail = exchangeData.session.user?.email || '';
+                }
               }
             } catch (clientExErr) {
               console.warn('Client exchangeCodeForSession failed, falling back to server:', clientExErr);

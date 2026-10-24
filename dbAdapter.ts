@@ -361,11 +361,40 @@ export async function supabaseLogoutUser(token?: string): Promise<void> {
   }
 }
 
+export function getAppBaseUrl(req?: any): string {
+  if (req) {
+    const origin = req.headers?.origin;
+    if (origin && typeof origin === 'string' && origin.startsWith('http')) {
+      return origin.replace(/\/+$/, '');
+    }
+    const host = req.headers?.['x-forwarded-host'] || req.headers?.host;
+    if (host && typeof host === 'string') {
+      const proto = (req.headers?.['x-forwarded-proto'] as string) || (req.secure ? 'https' : 'http');
+      return `${proto}://${host}`.replace(/\/+$/, '');
+    }
+  }
+
+  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
+  if (process.env.APP_URL && (!isProd || !process.env.APP_URL.includes('localhost'))) {
+    return process.env.APP_URL.replace(/\/+$/, '');
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/+$/, '');
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
+  }
+  if (isProd) {
+    return 'https://projevo-ai.vercel.app';
+  }
+  return (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+}
+
 export async function supabaseResetPasswordRequest(email: string, redirectTo?: string): Promise<{ success: boolean; error?: string }> {
   const sb = getSupabase();
   if (!sb) return { success: false, error: 'Supabase not configured' };
   try {
-    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const appUrl = getAppBaseUrl();
     const redirectUrl = redirectTo || `${appUrl}/login`;
     const { error } = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: redirectUrl
@@ -464,7 +493,7 @@ export async function supabaseSendLoginOtp(email: string, redirectTo?: string): 
   const sb = getSupabase();
   if (!sb) return { ok: false, error: 'Supabase not configured' };
   try {
-    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const appUrl = getAppBaseUrl();
     const redirectUrl = redirectTo || `${appUrl}/login`;
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
@@ -526,8 +555,8 @@ export async function supabaseResendOtp(email: string, type: any = 'signup'): Pr
   }
 }
 
-export async function supabaseGetOAuthUrl(provider: 'google' = 'google', redirectTo?: string): Promise<{ url?: string; error?: string }> {
-  const targetUrl = redirectTo || `${process.env.APP_URL || ''}/login`;
+export async function supabaseGetOAuthUrl(provider: 'google' = 'google', redirectTo?: string, req?: any): Promise<{ url?: string; error?: string }> {
+  const targetUrl = redirectTo || `${getAppBaseUrl(req)}/login`;
   const delimiter = targetUrl.includes('?') ? '&' : '?';
   const mockOAuthUrl = `${targetUrl}${delimiter}code=mock_google_oauth_success`;
 

@@ -33,6 +33,7 @@ import {
   supabaseResendOtp,
   supabaseGetOAuthUrl,
   supabaseExchangeCode,
+  getAppBaseUrl,
   dbGetProfile,
   dbSaveProfile,
   dbSaveSkill,
@@ -118,6 +119,7 @@ app.use((req, res, next) => {
       const allowed = [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'https://projevo-ai.vercel.app',
         appUrl,
         vercelUrl
       ].filter(Boolean);
@@ -4849,8 +4851,9 @@ app.post('/api/auth/resend-verification', async (req, res) => {
 // Google OAuth URL generator
 app.get('/api/auth/google/url', async (req, res) => {
   try {
-    const redirectTo = (req.query.redirectTo as string) || undefined;
-    const result = await supabaseGetOAuthUrl('google', redirectTo);
+    const defaultBaseUrl = getAppBaseUrl(req);
+    const redirectTo = (req.query.redirectTo as string) || `${defaultBaseUrl}/login`;
+    const result = await supabaseGetOAuthUrl('google', redirectTo, req);
     if (result.error) {
       return res.status(400).json({ error: result.error });
     }

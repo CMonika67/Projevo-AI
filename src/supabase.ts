@@ -1,6 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 function getEnv(key: string): string {
+  try {
+    const meta = (new Function('try { return import.meta; } catch(e) { return null; }'))();
+    if (meta && meta.env && meta.env[key]) {
+      return meta.env[key];
+    }
+  } catch (e) {
+    // ignore in environments without dynamic import.meta
+  }
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
     return process.env[key] as string;
   }

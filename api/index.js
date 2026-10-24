@@ -1228,11 +1228,38 @@ async function supabaseLogoutUser(token) {
   } catch (err) {
   }
 }
+function getAppBaseUrl(req) {
+  if (req) {
+    const origin = req.headers?.origin;
+    if (origin && typeof origin === "string" && origin.startsWith("http")) {
+      return origin.replace(/\/+$/, "");
+    }
+    const host = req.headers?.["x-forwarded-host"] || req.headers?.host;
+    if (host && typeof host === "string") {
+      const proto = req.headers?.["x-forwarded-proto"] || (req.secure ? "https" : "http");
+      return `${proto}://${host}`.replace(/\/+$/, "");
+    }
+  }
+  const isProd = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
+  if (process.env.APP_URL && (!isProd || !process.env.APP_URL.includes("localhost"))) {
+    return process.env.APP_URL.replace(/\/+$/, "");
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/+$/, "");
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, "");
+  }
+  if (isProd) {
+    return "https://projevo-ai.vercel.app";
+  }
+  return (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+}
 async function supabaseResetPasswordRequest(email, redirectTo) {
   const sb = getSupabase();
   if (!sb) return { success: false, error: "Supabase not configured" };
   try {
-    const appUrl = process.env.APP_URL || "http://localhost:3000";
+    const appUrl = getAppBaseUrl();
     const redirectUrl = redirectTo || `${appUrl}/login`;
     const { error } = await sb.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: redirectUrl
@@ -1309,7 +1336,7 @@ async function supabaseSendLoginOtp(email, redirectTo) {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: "Supabase not configured" };
   try {
-    const appUrl = process.env.APP_URL || "http://localhost:3000";
+    const appUrl = getAppBaseUrl();
     const redirectUrl = redirectTo || `${appUrl}/login`;
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
@@ -1364,8 +1391,8 @@ async function supabaseResendOtp(email, type = "signup") {
     return { ok: false, error: err.message };
   }
 }
-async function supabaseGetOAuthUrl(provider = "google", redirectTo) {
-  const targetUrl = redirectTo || `${process.env.APP_URL || ""}/login`;
+async function supabaseGetOAuthUrl(provider = "google", redirectTo, req) {
+  const targetUrl = redirectTo || `${getAppBaseUrl(req)}/login`;
   const delimiter = targetUrl.includes("?") ? "&" : "?";
   const mockOAuthUrl = `${targetUrl}${delimiter}code=mock_google_oauth_success`;
   if (supabaseDisabledForTesting) {
@@ -1850,6 +1877,13 @@ import rateLimit from "express-rate-limit";
 // src/supabase.ts
 import { createClient as createClient2 } from "@supabase/supabase-js";
 function getEnv(key) {
+  try {
+    const meta = new Function("try { return import.meta; } catch(e) { return null; }")();
+    if (meta && meta.env && meta.env[key]) {
+      return meta.env[key];
+    }
+  } catch (e) {
+  }
   if (typeof process !== "undefined" && process.env && process.env[key]) {
     return process.env[key];
   }
@@ -2001,6 +2035,7 @@ app.use((req, res, next) => {
       const allowed = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://projevo-ai.vercel.app",
         appUrl,
         vercelUrl
       ].filter(Boolean);
@@ -6002,8 +6037,9 @@ app.post("/api/auth/resend-verification", async (req, res) => {
 });
 app.get("/api/auth/google/url", async (req, res) => {
   try {
-    const redirectTo = req.query.redirectTo || void 0;
-    const result = await supabaseGetOAuthUrl("google", redirectTo);
+    const defaultBaseUrl = getAppBaseUrl(req);
+    const redirectTo = req.query.redirectTo || `${defaultBaseUrl}/login`;
+    const result = await supabaseGetOAuthUrl("google", redirectTo, req);
     if (result.error) {
       return res.status(400).json({ error: result.error });
     }
