@@ -7,20 +7,31 @@ function getEnv(key: string): string {
   return '';
 }
 
-const supabaseUrl = 
-  getEnv('SUPABASE_URL') ||
-  getEnv('NEXT_PUBLIC_SUPABASE_URL') ||
-  getEnv('VITE_SUPABASE_URL');
+function getSupabaseUrl(): string {
+  return (
+    getEnv('SUPABASE_URL') ||
+    getEnv('NEXT_PUBLIC_SUPABASE_URL') ||
+    getEnv('VITE_SUPABASE_URL')
+  );
+}
 
-const supabaseKey = 
-  getEnv('SUPABASE_ANON_KEY') ||
-  getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ||
-  getEnv('VITE_SUPABASE_ANON_KEY');
+function getSupabaseKey(): string {
+  return (
+    getEnv('SUPABASE_SERVICE_ROLE_KEY') ||
+    getEnv('SUPABASE_ANON_KEY') ||
+    getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ||
+    getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') ||
+    getEnv('VITE_SUPABASE_ANON_KEY') ||
+    getEnv('VITE_SUPABASE_PUBLISHABLE_KEY')
+  );
+}
 
 let clientInstance: SupabaseClient | null = null;
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseKey && supabaseUrl.startsWith('https://'));
+  const url = getSupabaseUrl();
+  const key = getSupabaseKey();
+  return Boolean(url && key && url.startsWith('https://'));
 }
 
 export function getSupabase(): SupabaseClient | null {
@@ -28,7 +39,7 @@ export function getSupabase(): SupabaseClient | null {
     return null;
   }
   if (!clientInstance) {
-    clientInstance = createClient(supabaseUrl, supabaseKey, {
+    clientInstance = createClient(getSupabaseUrl(), getSupabaseKey(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false

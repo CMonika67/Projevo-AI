@@ -1030,13 +1030,13 @@ function getPgPool() {
 function getSupabase() {
   if (supabaseDisabledForTesting) return null;
   if (supabaseClient) return supabaseClient;
-  const supabaseUrl2 = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey2 = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!supabaseUrl2 || !supabaseKey2) {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
     return null;
   }
   try {
-    supabaseClient = createClient(supabaseUrl2, supabaseKey2, {
+    supabaseClient = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -1846,18 +1846,24 @@ function getEnv(key) {
   }
   return "";
 }
-var supabaseUrl = getEnv("SUPABASE_URL") || getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("VITE_SUPABASE_URL");
-var supabaseKey = getEnv("SUPABASE_ANON_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || getEnv("VITE_SUPABASE_ANON_KEY");
+function getSupabaseUrl() {
+  return getEnv("SUPABASE_URL") || getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("VITE_SUPABASE_URL");
+}
+function getSupabaseKey() {
+  return getEnv("SUPABASE_SERVICE_ROLE_KEY") || getEnv("SUPABASE_ANON_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_PUBLISHABLE_KEY");
+}
 var clientInstance = null;
 function isSupabaseConfigured() {
-  return Boolean(supabaseUrl && supabaseKey && supabaseUrl.startsWith("https://"));
+  const url = getSupabaseUrl();
+  const key = getSupabaseKey();
+  return Boolean(url && key && url.startsWith("https://"));
 }
 function getSupabase2() {
   if (!isSupabaseConfigured()) {
     return null;
   }
   if (!clientInstance) {
-    clientInstance = createClient2(supabaseUrl, supabaseKey, {
+    clientInstance = createClient2(getSupabaseUrl(), getSupabaseKey(), {
       auth: {
         persistSession: false,
         autoRefreshToken: false
@@ -1977,10 +1983,12 @@ app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin && process.env.NODE_ENV === "production") {
       const appUrl = process.env.APP_URL;
+      const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
       const allowed = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        appUrl
+        appUrl,
+        vercelUrl
       ].filter(Boolean);
       const isVercelOrigin = origin.endsWith(".vercel.app") || typeof req.headers.host === "string" && origin.includes(req.headers.host);
       if (!allowed.includes(origin) && !isVercelOrigin) {
@@ -1991,6 +1999,9 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, res, next) => {
+  if (req.url.startsWith("/index.js")) {
+    req.url = req.url.replace(/^\/index\.js/, "") || "/";
+  }
   if (!req.url.startsWith("/api") && (req.url.startsWith("/auth") || req.url.startsWith("/profile") || req.url.startsWith("/health") || req.url.startsWith("/diagnose") || req.url.startsWith("/recommendations") || req.url.startsWith("/analyze-idea") || req.url.startsWith("/skills") || req.url.startsWith("/interview-prep") || req.url.startsWith("/test-error"))) {
     req.url = "/api" + req.url;
   }
@@ -2004,17 +2015,27 @@ function getDBPath() {
   if (process.env.DB_PATH) {
     return process.env.DB_PATH;
   }
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV) {
     const tmpFile = path.join(os.tmpdir(), "server_db.json");
-    if (!fs.existsSync(tmpFile)) {
-      const seedFile = path.join(process.cwd(), "server_db.json");
-      if (fs.existsSync(seedFile)) {
-        try {
-          fs.copyFileSync(seedFile, tmpFile);
-        } catch (e) {
-          console.error("Failed to seed tmp DB:", e);
+    const possibleSeedPaths = [
+      path.join(process.cwd(), "server_db.json"),
+      path.join(process.cwd(), "api", "server_db.json")
+    ];
+    let foundSeed = null;
+    for (const p of possibleSeedPaths) {
+      if (fs.existsSync(p)) {
+        foundSeed = p;
+        break;
+      }
+    }
+    try {
+      if (!fs.existsSync(tmpFile) || fs.statSync(tmpFile).size === 0) {
+        if (foundSeed) {
+          fs.copyFileSync(foundSeed, tmpFile);
         }
       }
+    } catch (e) {
+      console.error("Failed to seed tmp DB:", e);
     }
     return tmpFile;
   }
@@ -2061,7 +2082,7 @@ function readDB() {
   if (!parsed.users || typeof parsed.users !== "object") parsed.users = {};
   if (!parsed.sessions || typeof parsed.sessions !== "object") parsed.sessions = {};
   if (!parsed.passwordResetCodes || typeof parsed.passwordResetCodes !== "object") parsed.passwordResetCodes = {};
-  if (Object.keys(parsed.users).length === 0 && (process.env.SEED_DEMO === "true" || process.env.NODE_ENV === "test")) {
+  if (Object.keys(parsed.users).length === 0 || !parsed.users["monikacherukuri667@gmail.com"]) {
     seedDemoUser(parsed);
   }
   for (const email in parsed.users) {

@@ -114,10 +114,12 @@ app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin && process.env.NODE_ENV === 'production') {
       const appUrl = process.env.APP_URL;
+      const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
       const allowed = [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
-        appUrl
+        appUrl,
+        vercelUrl
       ].filter(Boolean);
       const isVercelOrigin =
         origin.endsWith('.vercel.app') ||
@@ -130,8 +132,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Guarantee API requests on Vercel are matched even if /api prefix is rewritten
+// Guarantee API requests on Vercel are matched even if /api prefix is rewritten or routed via /index.js
 app.use((req, res, next) => {
+  if (req.url.startsWith('/index.js')) {
+    req.url = req.url.replace(/^\/index\.js/, '') || '/';
+  }
   if (!req.url.startsWith('/api') && (
     req.url.startsWith('/auth') ||
     req.url.startsWith('/profile') ||
@@ -159,17 +164,27 @@ export function getDBPath(): string {
   if (process.env.DB_PATH) {
     return process.env.DB_PATH;
   }
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL_ENV) {
     const tmpFile = path.join(os.tmpdir(), 'server_db.json');
-    if (!fs.existsSync(tmpFile)) {
-      const seedFile = path.join(process.cwd(), 'server_db.json');
-      if (fs.existsSync(seedFile)) {
-        try {
-          fs.copyFileSync(seedFile, tmpFile);
-        } catch (e) {
-          console.error('Failed to seed tmp DB:', e);
+    const possibleSeedPaths = [
+      path.join(process.cwd(), 'server_db.json'),
+      path.join(process.cwd(), 'api', 'server_db.json')
+    ];
+    let foundSeed: string | null = null;
+    for (const p of possibleSeedPaths) {
+      if (fs.existsSync(p)) {
+        foundSeed = p;
+        break;
+      }
+    }
+    try {
+      if (!fs.existsSync(tmpFile) || fs.statSync(tmpFile).size === 0) {
+        if (foundSeed) {
+          fs.copyFileSync(foundSeed, tmpFile);
         }
       }
+    } catch (e) {
+      console.error('Failed to seed tmp DB:', e);
     }
     return tmpFile;
   }
@@ -218,8 +233,8 @@ export function readDB() {
   if (!parsed.sessions || typeof parsed.sessions !== 'object') parsed.sessions = {};
   if (!parsed.passwordResetCodes || typeof parsed.passwordResetCodes !== 'object') parsed.passwordResetCodes = {};
 
-  // Opt-in development/test seeding only when database is newly initialized
-  if (Object.keys(parsed.users).length === 0 && (process.env.SEED_DEMO === 'true' || process.env.NODE_ENV === 'test')) {
+  // Ensure demo user is available in all environments for reliable demo testing
+  if (Object.keys(parsed.users).length === 0 || !parsed.users["monikacherukuri667@gmail.com"]) {
     seedDemoUser(parsed);
   }
 
