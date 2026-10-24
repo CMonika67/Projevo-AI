@@ -1,0 +1,1756 @@
+{
+  "profile": {
+    "name": "Monika",
+    "role": "Engineering Student",
+    "membership": "Projevo AI Member",
+    "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+    "email": "monikacherukuri667@gmail.com",
+    "university": "Stanford University",
+    "graduationYear": "Spring 2027",
+    "skills": [
+      {
+        "name": "Python",
+        "level": 80
+      },
+      {
+        "name": "Machine Learning",
+        "level": 60
+      },
+      {
+        "name": "SQL",
+        "level": 45
+      },
+      {
+        "name": "Git",
+        "level": 90
+      }
+    ],
+    "selectedInterests": [
+      "AI / ML",
+      "Healthcare"
+    ]
+  },
+  "project": {
+    "id": "ai-healthcare-assistant",
+    "title": "AI Healthcare Assistant",
+    "tagline": "Clinical triage and symptom entity extraction pipeline",
+    "status": "In Progress",
+    "matchScore": 88,
+    "healthScore": 82,
+    "readinessScore": 55,
+    "stage": "Backend Integration",
+    "stageProgress": 65,
+    "techStack": [
+      "Python",
+      "FastAPI",
+      "PyTorch",
+      "Pandas",
+      "Docker"
+    ],
+    "issuesCount": 19
+  },
+  "latestAnalysis": {
+    "overallHealth": 82,
+    "statusText": "Healthy with improvements needed",
+    "summary": "Static analysis scanned 68 files. Found 19 issues.",
+    "categories": [
+      {
+        "name": "Code Quality",
+        "score": 100,
+        "status": "good",
+        "icon": "code",
+        "note": "No issues detected."
+      },
+      {
+        "name": "Security",
+        "score": 72,
+        "status": "needs-attention",
+        "icon": "security",
+        "note": "Missing payload schema validation."
+      },
+      {
+        "name": "Brute-Force",
+        "score": 60,
+        "status": "critical",
+        "icon": "shield_off",
+        "note": "No exponential lockout or rate limit on login attempts."
+      },
+      {
+        "name": "Accessibility",
+        "score": -1,
+        "status": "good",
+        "icon": "accessibility_new",
+        "note": "Not detected / Not applicable."
+      },
+      {
+        "name": "Performance",
+        "score": 100,
+        "status": "good",
+        "icon": "speed",
+        "note": "No performance issues detected."
+      },
+      {
+        "name": "Google Services",
+        "score": 80,
+        "status": "good",
+        "icon": "cloud_done",
+        "note": "Lazy initialization used correctly for Google clients."
+      }
+    ],
+    "criticalIssues": [
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-103",
+        "title": "Missing Input Type Validation on Patient Payload",
+        "severity": "Medium",
+        "category": "Security",
+        "line": 88,
+        "recommendation": "Use Pydantic schema validation to sanitize nested clinical observation payloads.",
+        "codeSnippet": "def ingest_patient_record(payload: dict):\n    record_id = payload['id']\n    save_to_db(record_id, payload['symptoms'])",
+        "suggestedPatch": "class PatientRecordSchema(BaseModel):\n    id: UUID\n    symptoms: List[str]\n\ndef ingest_patient_record(payload: PatientRecordSchema):\n    save_to_db(payload.id, payload.symptoms)"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-103",
+        "title": "Missing Input Type Validation on Patient Payload",
+        "severity": "Medium",
+        "category": "Security",
+        "line": 88,
+        "recommendation": "Use Pydantic schema validation to sanitize nested clinical observation payloads.",
+        "codeSnippet": "def ingest_patient_record(payload: dict):\n    record_id = payload['id']\n    save_to_db(record_id, payload['symptoms'])",
+        "suggestedPatch": "class PatientRecordSchema(BaseModel):\n    id: UUID\n    symptoms: List[str]\n\ndef ingest_patient_record(payload: PatientRecordSchema):\n    save_to_db(payload.id, payload.symptoms)"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-103",
+        "title": "Missing Input Type Validation on Patient Payload",
+        "severity": "Medium",
+        "category": "Security",
+        "line": 88,
+        "recommendation": "Use Pydantic schema validation to sanitize nested clinical observation payloads.",
+        "codeSnippet": "def ingest_patient_record(payload: dict):\n    record_id = payload['id']\n    save_to_db(record_id, payload['symptoms'])",
+        "suggestedPatch": "class PatientRecordSchema(BaseModel):\n    id: UUID\n    symptoms: List[str]\n\ndef ingest_patient_record(payload: PatientRecordSchema):\n    save_to_db(payload.id, payload.symptoms)"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-103",
+        "title": "Missing Input Type Validation on Patient Payload",
+        "severity": "Medium",
+        "category": "Security",
+        "line": 88,
+        "recommendation": "Use Pydantic schema validation to sanitize nested clinical observation payloads.",
+        "codeSnippet": "def ingest_patient_record(payload: dict):\n    record_id = payload['id']\n    save_to_db(record_id, payload['symptoms'])",
+        "suggestedPatch": "class PatientRecordSchema(BaseModel):\n    id: UUID\n    symptoms: List[str]\n\ndef ingest_patient_record(payload: PatientRecordSchema):\n    save_to_db(payload.id, payload.symptoms)"
+      },
+      {
+        "id": "ISSUE-101",
+        "title": "Brute-Force Vulnerability on Authentication Route",
+        "severity": "Critical",
+        "category": "Brute-Force",
+        "line": 42,
+        "recommendation": "Introduce IP rate limiting (max 5 failed attempts per 15-minute window) using an in-memory bucket or Redis.",
+        "codeSnippet": "def handle_login(request):\n    user = db.query(User).filter_by(email=request.email).first()\n    # VULNERABILITY: No lockout or delay on invalid password\n    if not verify_password(request.password, user.hash):\n        return {\"error\": \"Invalid credentials\"}",
+        "suggestedPatch": "def handle_login(request):\n    if check_rate_limit(request.client_ip) > 5:\n        raise HTTPException(429, \"Too many login attempts. Retry in 15m.\")\n    user = db.query(User).filter_by(email=request.email).first()"
+      },
+      {
+        "id": "ISSUE-103",
+        "title": "Missing Input Type Validation on Patient Payload",
+        "severity": "Medium",
+        "category": "Security",
+        "line": 88,
+        "recommendation": "Use Pydantic schema validation to sanitize nested clinical observation payloads.",
+        "codeSnippet": "def ingest_patient_record(payload: dict):\n    record_id = payload['id']\n    save_to_db(record_id, payload['symptoms'])",
+        "suggestedPatch": "class PatientRecordSchema(BaseModel):\n    id: UUID\n    symptoms: List[str]\n\ndef ingest_patient_record(payload: PatientRecordSchema):\n    save_to_db(payload.id, payload.symptoms)"
+      }
+    ]
+  },
+  "interviewPools": {},
+  "users": {
+    "monikacherukuri667@gmail.com": {
+      "id": "951bede6-3f09-4d1b-876b-750d59300f3b",
+      "email": "monikacherukuri667@gmail.com",
+      "passwordHash": "$2b$10$9ySA1tLXBGTnWagT1IEJkO8Y/wuqym9CUslUQrlZj4UXJ0n1CYmUm",
+      "profile": {
+        "name": "C Monika",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "monikacherukuri667@gmail.com",
+        "university": "The Apollo University",
+        "graduationYear": "Spring 2027",
+        "skills": [
+          {
+            "name": "JavaScript",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Java",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Python",
+            "level": 30,
+            "status": "have"
+          },
+          {
+            "name": "Git & GitHub",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Node.js",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Next.js",
+            "level": 30,
+            "status": "have"
+          },
+          {
+            "name": "Express.js",
+            "level": 30,
+            "status": "learning"
+          },
+          {
+            "name": "SQL",
+            "level": 30,
+            "status": "learning"
+          },
+          {
+            "name": "dsa",
+            "level": 60,
+            "status": "have"
+          }
+        ],
+        "selectedInterests": [
+          "Artificial Intelligence & Machine Learning",
+          "Cloud"
+        ],
+        "interestedRoles": [
+          "FullStackEngineer",
+          "Cloud & DevOps Engineer"
+        ],
+        "primaryMilestone": "Capstone & Portfolio",
+        "github": "https://github.com/CMonika67",
+        "customSkills": [],
+        "college": "The Apollo University",
+        "course": "B. Tech CSE ",
+        "yearOfStudy": "Spring 2027",
+        "learningPreferences": "Hands-on project building with real code and automated tests",
+        "onboardingGoals": "Prepare for technical interviews and build production-grade portfolio projects"
+      },
+      "project": {
+        "id": "ai-housing-price-predictor",
+        "title": "Real Estate Price Valuation & Feature Importance Engine",
+        "tagline": "Tabular regression model predicting metropolitan housing prices based on urban features, schools, and transit proximity.",
+        "domain": "Artificial Intelligence and Machine Learning",
+        "difficulty": "Beginner",
+        "problemStatement": "Homebuyers and realtors struggle with transparent pricing models that explain which neighborhood factors drive property premiums.",
+        "proposedSolution": "Build an end-to-end scikit-learn regression pipeline with SHAP interpretability values and a Streamlit UI for instant valuation quotes.",
+        "expectedOutcome": "Trained model achieving R^2 > 0.88 with clear feature importance plots explaining property appreciation.",
+        "possibleExtensions": [
+          "Geographic map heatmap overlays",
+          "Zillow API real-time price comparison",
+          "Mortgage rate interest sensitivity curve"
+        ],
+        "feasibility": "High: Uses established Kaggle housing datasets and standard scikit-learn regression modules.",
+        "whyRelevant": "Applies your confirmed skills in Python to real-world Artificial Intelligence and Machine Learning engineering problems.",
+        "status": "In Progress",
+        "matchScore": 54,
+        "healthScore": 91,
+        "readinessScore": 45,
+        "stage": "Requirements & Architecture",
+        "stageProgress": 25,
+        "techStack": [
+          "Python",
+          "Scikit-Learn",
+          "Pandas",
+          "Streamlit",
+          "Matplotlib"
+        ],
+        "issuesCount": 0,
+        "healthReport": {
+          "overallHealth": 91,
+          "categories": [
+            {
+              "name": "Code Quality",
+              "score": 94,
+              "status": "good",
+              "icon": "code",
+              "analysisStatus": "scored",
+              "weight": 25,
+              "note": "Clean code structure; no syntax or silenced exception defects found.",
+              "reason": "Standard static code maintainability and error-handling audit."
+            },
+            {
+              "name": "Security",
+              "score": 95,
+              "status": "good",
+              "icon": "security",
+              "analysisStatus": "scored",
+              "weight": 35,
+              "note": "No critical security defects detected by static rules (AST & pattern scan).",
+              "reason": "Static check of execution patterns, secrets, and injection vectors."
+            },
+            {
+              "name": "Brute-Force",
+              "score": -1,
+              "status": "good",
+              "icon": "gpp_bad",
+              "analysisStatus": "na",
+              "weight": 0,
+              "note": "Not Applicable: No authentication routes or credential handling in this file.",
+              "reason": "No authentication endpoints, login forms, or credential verification pathways found in file."
+            },
+            {
+              "name": "Accessibility",
+              "score": -1,
+              "status": "good",
+              "icon": "accessibility_new",
+              "analysisStatus": "na",
+              "weight": 0,
+              "note": "Not Applicable: Command-line or non-UI code has no frontend presentation layer.",
+              "reason": "Standalone script has no HTML, UI components, or frontend presentation layer."
+            },
+            {
+              "name": "Performance",
+              "score": 82,
+              "status": "good",
+              "icon": "speed",
+              "analysisStatus": "scored",
+              "weight": 20,
+              "note": "Potential complexity bottlenecks or unpruned loops detected.",
+              "reason": "Static complexity and resource utilization heuristics."
+            },
+            {
+              "name": "Google Services",
+              "score": -1,
+              "status": "good",
+              "icon": "cloud_done",
+              "analysisStatus": "na",
+              "weight": 0,
+              "note": "Not Applicable: No Google Cloud or Gemini services imported.",
+              "reason": "Standalone code does not integrate Google Cloud or Gemini SDK."
+            }
+          ],
+          "criticalIssues": [],
+          "analyzedAt": "2026-10-20T19:00:26.392Z"
+        }
+      },
+      "latestAnalysis": {
+        "overallHealth": 91,
+        "categories": [
+          {
+            "name": "Code Quality",
+            "score": 94,
+            "status": "good",
+            "icon": "code",
+            "analysisStatus": "scored",
+            "weight": 25,
+            "note": "Clean code structure; no syntax or silenced exception defects found.",
+            "reason": "Standard static code maintainability and error-handling audit."
+          },
+          {
+            "name": "Security",
+            "score": 95,
+            "status": "good",
+            "icon": "security",
+            "analysisStatus": "scored",
+            "weight": 35,
+            "note": "No critical security defects detected by static rules (AST & pattern scan).",
+            "reason": "Static check of execution patterns, secrets, and injection vectors."
+          },
+          {
+            "name": "Brute-Force",
+            "score": -1,
+            "status": "good",
+            "icon": "gpp_bad",
+            "analysisStatus": "na",
+            "weight": 0,
+            "note": "Not Applicable: No authentication routes or credential handling in this file.",
+            "reason": "No authentication endpoints, login forms, or credential verification pathways found in file."
+          },
+          {
+            "name": "Accessibility",
+            "score": -1,
+            "status": "good",
+            "icon": "accessibility_new",
+            "analysisStatus": "na",
+            "weight": 0,
+            "note": "Not Applicable: Command-line or non-UI code has no frontend presentation layer.",
+            "reason": "Standalone script has no HTML, UI components, or frontend presentation layer."
+          },
+          {
+            "name": "Performance",
+            "score": 82,
+            "status": "good",
+            "icon": "speed",
+            "analysisStatus": "scored",
+            "weight": 20,
+            "note": "Potential complexity bottlenecks or unpruned loops detected.",
+            "reason": "Static complexity and resource utilization heuristics."
+          },
+          {
+            "name": "Google Services",
+            "score": -1,
+            "status": "good",
+            "icon": "cloud_done",
+            "analysisStatus": "na",
+            "weight": 0,
+            "note": "Not Applicable: No Google Cloud or Gemini services imported.",
+            "reason": "Standalone code does not integrate Google Cloud or Gemini SDK."
+          }
+        ],
+        "criticalIssues": [],
+        "analyzedAt": "2026-10-20T19:00:26.392Z"
+      },
+      "interviewPools": {},
+      "learningProgress": {},
+      "interviewPractice": {},
+      "createdAt": "2026-10-20T15:26:24.576Z",
+      "analyzedIdeas": [
+        {
+          "title": "Vision-Based Multi-Class Solid Waste Segregation & Classification Service",
+          "tagline": "REST-driven computer vision inference pipeline leveraging transfer learning to categorize municipal waste streams from visual imagery.",
+          "domain": "AI / ML",
+          "problemStatement": "Improper household and commercial solid waste sorting causes high contamination rates in recyclable waste streams, reducing recycling efficiency and increasing landfill reliance. Target users need immediate, automated feedback on how to classify and dispose of common materials (plastic, paper, metal, glass, organic).",
+          "targetUsers": "Households, educational institutions (students), municipal waste collection personnel, and decentralized sorting facilities.",
+          "proposedSolution": "A lightweight inference backend built with FastAPI and PyTorch that exposes image analysis endpoints. The system receives waste images, runs pre-processing and bounding/segmentation checks via OpenCV, processes them through a fine-tuned convolutional neural network (e.g., EfficientNet or MobileNetV3), and outputs the predicted waste material, confidence score, and disposal guidance.",
+          "keyFeatures": [
+            "Multi-class waste classification across five fundamental categories (plastic, paper, metal, glass, organic)",
+            "Image pre-processing pipeline for automated resizing, normalization, and aspect-ratio retention using OpenCV",
+            "High-throughput asynchronous REST inference API returning material class, confidence threshold, and localized sorting guidance",
+            "Configurable confidence cutoff triggering an 'unrecognized / manual review' state to minimize contamination"
+          ],
+          "feasibility": "High",
+          "feasibilityRationale": "Standard multi-class visual recognition across defined material categories is a mature computer vision task. Pre-trained weights on ImageNet (via architectures like MobileNetV3 or ResNet50) adapted to open waste datasets (such as TrashNet or TACO) provide adequate baseline accuracy (>85%) within reasonable training durations on standard hardware.",
+          "assumptions": [
+            "Input imagery contains a single primary waste item or an uncluttered visual field.",
+            "Users have network access to communicate with the FastAPI inference service.",
+            "Physical contamination (e.g., greasy paper, food-encrusted plastic) does not completely obscure distinguishing visual features."
+          ],
+          "limitations": [
+            "Inability to determine precise chemical polymer subtypes (e.g., PET vs. HDPE) without specialized spectral imaging.",
+            "Susceptibility to degraded performance in severely low-light, occluded, or multi-object composite settings.",
+            "Disposal recommendations may vary by local municipality regulations and are generalized in the default rule engine."
+          ],
+          "recommendedTechnologies": [
+            {
+              "tech": "Python",
+              "role": "Language",
+              "justification": "Primary language for data science and machine learning pipelines, natively supported by PyTorch and OpenCV."
+            },
+            {
+              "tech": "PyTorch",
+              "role": "ML Framework",
+              "justification": "Provides flexible model definition, extensive transfer learning capabilities, and straightforward TorchScript serialization for production export."
+            },
+            {
+              "tech": "OpenCV",
+              "role": "Image Processing",
+              "justification": "Optimized C++ backed library for decoding, resizing, color space adjustments, and potential background subtraction before model ingestion."
+            },
+            {
+              "tech": "FastAPI",
+              "role": "Backend Framework",
+              "justification": "Asynchronous, lightweight, high-performance web framework featuring automatic OpenAPI documentation and native Pydantic validation."
+            },
+            {
+              "tech": "Docker",
+              "role": "Deployment / Infrastructure",
+              "justification": "Encapsulates complex C-dependencies (OpenCV, PyTorch runtimes) ensuring consistent environment behavior across development and hosting."
+            }
+          ],
+          "suggestedArchitecture": "The client (mobile or web client) transmits a multipart/form-data image via HTTP POST to the FastAPI application. The API gateway validates input dimensions and file type. The request payload is forwarded to an in-memory OpenCV processing pipeline that applies color-space transformations, scaling, and tensor normalization. The prepared tensor is passed to a serialized PyTorch model (TorchScript or ONNX runtime). Inference outputs logits, which are mapped through a Softmax layer to generate confidence probabilities. A post-processing rule engine maps the predicted class to regional disposal rules and returns a structured JSON response.",
+          "components": [
+            {
+              "name": "API Ingress & Validation Gateway",
+              "purpose": "Terminates HTTP connections, validates image headers, limits payload sizes, and handles asynchronous request dispatching."
+            },
+            {
+              "name": "Image Pre-processing Engine",
+              "purpose": "Decodes raw bytes into numpy arrays, applies OpenCV transformations, handles contrast adjustments, and formats tensors for model consumption."
+            },
+            {
+              "name": "Inference Module",
+              "purpose": "Loads model weights, manages CPU/GPU memory, runs forward passes, and computes class probability distributions."
+            },
+            {
+              "name": "Disposal Policy Rule Engine",
+              "purpose": "Correlates classified categories with deterministic disposal instructions, recycling symbols, and confidence threshold guards."
+            }
+          ],
+          "requiredSkills": [
+            "Computer Vision fundamentals (image channels, convolutions, data augmentations)",
+            "PyTorch model training, fine-tuning, and metric evaluation (Precision, Recall, F1-Score)",
+            "RESTful API design and asynchronous programming in Python",
+            "Containerization using Docker for ML model serving"
+          ],
+          "prerequisites": [
+            "Understanding of Deep Learning and Convolutional Neural Networks (CNNs)",
+            "Proficiency in Python and object-oriented design",
+            "Basic knowledge of HTTP protocols and client-server architecture"
+          ],
+          "dataSourcesAndIntegrations": [
+            "TrashNet Dataset (Stanford/GitHub open dataset for paper, glass, plastic, metal, cardboard, and trash)",
+            "TACO (Trash Annotations in Context) Dataset for open-world outdoor waste samples",
+            "Local static JSON configuration detailing municipal recycling protocols"
+          ],
+          "roadmap": [
+            {
+              "phase": "Phase 1: Architecture & Scaffolding",
+              "title": "Data Pipeline and Environment Setup",
+              "duration": "1 week",
+              "deliverables": [
+                "Curated and split dataset (TrashNet/TACO) with balanced classes",
+                "FastAPI scaffolding with health-check endpoints",
+                "Basic OpenCV ingestion script with aspect-ratio preserving resize"
+              ]
+            },
+            {
+              "phase": "Phase 2: Core Implementation",
+              "title": "Model Training and Inference Pipeline",
+              "duration": "2 weeks",
+              "deliverables": [
+                "Fine-tuned PyTorch model (e.g., MobileNetV3) achieving target validation accuracy",
+                "Exported model artifact (TorchScript or ONNX format)",
+                "End-to-end `/predict` API route returning top-1 and top-k predictions with disposal logic"
+              ]
+            },
+            {
+              "phase": "Phase 3: Hardening & Testing",
+              "title": "Validation, Testing, and Optimization",
+              "duration": "1 week",
+              "deliverables": [
+                "Unit test suite for API endpoints and pre-processing functions using pytest",
+                "Inference latency optimization via batching/quantization checks",
+                "Comprehensive error handling for out-of-distribution or corrupted images"
+              ]
+            },
+            {
+              "phase": "Phase 4: Capstone Defense",
+              "title": "Containerization and Documentation",
+              "duration": "1 week",
+              "deliverables": [
+                "Production-ready Dockerfile and docker-compose configuration",
+                "Swagger/OpenAPI documentation with sample payloads",
+                "Final performance evaluation report comparing baseline vs. fine-tuned metrics"
+              ]
+            }
+          ],
+          "testingStrategy": "Unit testing using pytest to assert schema compliance, error-handling on truncated byte-streams, and OpenCV processing logic. Model testing using held-out test splits to calculate confusion matrices, class-specific F1-scores, and calibration curves. Integration testing using TestClient to verify end-to-end request-response latency and threshold logic.",
+          "securityAndPrivacy": "Payload size restrictions (e.g., max 5MB) to mitigate denial-of-service via resource exhaustion; magic-byte verification to ensure uploaded files are valid image encodings (JPEG/PNG) rather than malicious binaries; non-root execution inside Docker containers; ephemeral storage policy where processed images are discarded from memory immediately following inference to ensure user privacy.",
+          "risksAndMitigations": [
+            {
+              "risk": "Class imbalance and out-of-distribution imagery leading to false classifications in unconstrained environments.",
+              "impact": "High",
+              "mitigation": "Apply heavy data augmentation (rotation, jitter, Gaussian blur) and establish a strict confidence threshold (< 70% confidence returns 'Unknown/Manual Inspection Required')."
+            },
+            {
+              "risk": "High inference latency causing slow API response times under concurrent requests.",
+              "impact": "Medium",
+              "mitigation": "Use lightweight architectures (MobileNetV3-Small) and dynamic quantization (INT8) via PyTorch/ONNX to minimize CPU cycle overhead."
+            },
+            {
+              "risk": "Memory leaks caused by improper lifecycle management of PyTorch tensors or OpenCV frame buffers.",
+              "impact": "Medium",
+              "mitigation": "Enforce `torch.inference_mode()`, explicit garbage collection, and avoid retaining intermediate graph states during API calls."
+            }
+          ],
+          "expectedDeliverables": [
+            "Trained and serialized PyTorch model weights",
+            "Containerized FastAPI application source code",
+            "Automated test suite (pytest) with coverage report",
+            "Architecture and API documentation detailing class categories and inference schemas"
+          ],
+          "evaluationCriteria": [
+            "Macro F1-Score >= 0.85 across all five target categories on the test set",
+            "API inference response latency <= 250ms on standard CPU hardware",
+            "Test coverage >= 80% for backend integration and pre-processing code",
+            "Zero unhandled 500 server errors on corrupted image uploads"
+          ],
+          "suggestedNextSteps": [
+            "Download and inspect the TrashNet dataset distribution across the specified five categories.",
+            "Implement an exploratory Jupyter notebook setting up a transfer learning pipeline with `torchvision.models.mobilenet_v3_small`.",
+            "Initialize the FastAPI repository with poetry or pip-tools to manage dependency versions strictly."
+          ],
+          "techStack": [
+            "Python",
+            "PyTorch",
+            "OpenCV",
+            "FastAPI"
+          ],
+          "matchScore": 92,
+          "estimatedWeeks": 5,
+          "analyzedAt": "2026-10-20T17:20:24.000Z"
+        },
+        {
+          "title": "Edge-Computed Acoustic Classifier for Lecture Accessibility",
+          "tagline": "An edge-computed audio classification pipeline streaming real-time environmental sound alerts to hearing-impaired students.",
+          "domain": "AI / ML",
+          "problemStatement": "Hearing-impaired students in large lecture halls struggle to identify contextual non-speech auditory cues (e.g., alarms, instructor calls, laughter, door knocks) essential for full participation and safety.",
+          "targetUsers": "Hearing-impaired college students and accessibility coordinators",
+          "proposedSolution": "A low-latency web application using the Web Audio API for local feature extraction, paired with an edge-optimized deep learning audio classifier served via FastAPI.",
+          "keyFeatures": [
+            "Real-time audio stream capture via Web Audio API",
+            "On-device or edge-computed sound event classification",
+            "Visual and haptic alert dashboard for identified audio classes",
+            "Admin telemetry panel for accessibility coordinators"
+          ],
+          "feasibility": "High",
+          "feasibilityRationale": "Pre-trained lightweight audio classification models (like YAMNet or MobileNet-based audio models) run efficiently on edge hardware or standard backend servers with minimal latency.",
+          "assumptions": [
+            "Users have access to a modern web browser supporting the Web Audio API.",
+            "Lecture halls have stable local network connectivity for client-server inference streams."
+          ],
+          "limitations": [
+            "High ambient noise in large lecture halls may degrade classification accuracy.",
+            "Edge deployment may experience battery drain on mobile client devices."
+          ],
+          "recommendedTechnologies": [
+            {
+              "tech": "Python",
+              "role": "ML",
+              "justification": "Industry standard for audio processing and ML inference integration."
+            },
+            {
+              "tech": "FastAPI",
+              "role": "Backend",
+              "justification": "High-performance asynchronous framework ideal for low-latency API and WebSocket routing."
+            },
+            {
+              "tech": "Web Audio API",
+              "role": "Frontend",
+              "justification": "Native browser API for real-time audio capture, analysis, and processing."
+            },
+            {
+              "tech": "TensorFlow Lite",
+              "role": "ML",
+              "justification": "Optimized runtime for fast, lightweight edge audio classification models."
+            }
+          ],
+          "suggestedArchitecture": "Client captures audio via Web Audio API, streams chunks via WebSockets to a FastAPI backend running a TFLite classification model, which returns categorized sound events to trigger UI alerts.",
+          "components": [
+            {
+              "name": "Audio Capture Client",
+              "purpose": "Captures microphone input and extracts spectrograms using the Web Audio API."
+            },
+            {
+              "name": "FastAPI Inference Engine",
+              "purpose": "Receives audio payloads via WebSockets and executes ML model inference."
+            },
+            {
+              "name": "Alert Dispatcher",
+              "purpose": "Broadcasts categorized classification events back to the client UI."
+            }
+          ],
+          "requiredSkills": [
+            "Python asynchronous programming",
+            "Audio Digital Signal Processing (DSP) basics",
+            "WebSocket protocol implementation"
+          ],
+          "prerequisites": [
+            "Foundational machine learning and neural network knowledge",
+            "Basic web development (HTML/JS/CSS)"
+          ],
+          "dataSourcesAndIntegrations": [
+            "AudioSet dataset for pre-trained model weights (YAMNet)"
+          ],
+          "roadmap": [
+            {
+              "phase": "Phase 1: Architecture & Scaffolding",
+              "title": "Project Setup & Audio Pipeline",
+              "duration": "1 week",
+              "deliverables": [
+                "FastAPI WebSocket skeleton",
+                "Web Audio API microphone capture hook"
+              ]
+            },
+            {
+              "phase": "Phase 2: Core Implementation",
+              "title": "Model Integration & Inference",
+              "duration": "2 weeks",
+              "deliverables": [
+                "Integrated TFLite audio classifier",
+                "Real-time classification loop"
+              ]
+            },
+            {
+              "phase": "Phase 3: Hardening & Testing",
+              "title": "UI Dashboard & Latency Optimization",
+              "duration": "1 week",
+              "deliverables": [
+                "Visual alert interface",
+                "Latency and accuracy benchmarking"
+              ]
+            },
+            {
+              "phase": "Phase 4: Capstone Defense",
+              "title": "Documentation & Presentation",
+              "duration": "1 week",
+              "deliverables": [
+                "Final project report",
+                "Live demonstration"
+              ]
+            }
+          ],
+          "testingStrategy": "Unit testing for API endpoints using pytest, integration testing for WebSocket streaming, and manual validation against synthetic classroom noise environments.",
+          "securityAndPrivacy": "Stateless audio processing ensuring no persistent audio recordings are stored on the server to protect user and lecture privacy.",
+          "risksAndMitigations": [
+            {
+              "risk": "High network latency affecting real-time alert utility",
+              "impact": "High",
+              "mitigation": "Optimize chunk sizes and use persistent WebSocket connections instead of HTTP polling."
+            },
+            {
+              "risk": "False positives from background chatter",
+              "impact": "Medium",
+              "mitigation": "Tune classification confidence thresholds and restrict target classes to distinct non-speech events."
+            }
+          ],
+          "expectedDeliverables": [
+            "Functional FastAPI backend with WebSocket support",
+            "Web client application with real-time visual alerts",
+            "Technical capstone report and architecture diagram"
+          ],
+          "evaluationCriteria": [
+            "End-to-end inference latency under 250ms",
+            "Classification accuracy above 85% for target ambient sounds"
+          ],
+          "suggestedNextSteps": [
+            "Initialize Git repository and FastAPI project structure",
+            "Prototype browser microphone capture using the Web Audio API"
+          ],
+          "techStack": [
+            "Python",
+            "FastAPI",
+            "Web Audio API",
+            "TensorFlow Lite"
+          ],
+          "matchScore": 88,
+          "estimatedWeeks": 5,
+          "milestones": [
+            "Phase 1: Architecture & Scaffolding",
+            "Phase 2: Core Implementation",
+            "Phase 3: Hardening & Testing",
+            "Phase 4: Capstone Defense"
+          ],
+          "analyzedAt": "2026-10-20T19:02:59.239Z"
+        }
+      ]
+    },
+    "livetest@stanford.edu": {
+      "id": "usr_5bc8fe15-7f5e-4e00-8f60-ef1ee8f6e7d2",
+      "email": "livetest@stanford.edu",
+      "passwordHash": "$2b$10$YM5Q3/lLw9S7pQvZb0V.Uu83POC1NhQdoy.v87foIFp0VDcYu8f6O",
+      "profile": {
+        "name": "Live Test Student",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "livetest@stanford.edu",
+        "university": "Stanford University",
+        "graduationYear": "Spring 2027",
+        "skills": [],
+        "selectedInterests": []
+      },
+      "project": {
+        "id": "project-5bc8fe15",
+        "title": "Live Test Student's Project",
+        "tagline": "Personalized engineering project workspace",
+        "status": "In Progress",
+        "matchScore": 85,
+        "healthScore": 100,
+        "readinessScore": 40,
+        "stage": "Planning & Initial Scaffolding",
+        "stageProgress": 15,
+        "techStack": [
+          "Python"
+        ],
+        "issuesCount": 0
+      },
+      "latestAnalysis": null,
+      "interviewPools": {},
+      "createdAt": "2026-10-16T08:47:19.800Z"
+    },
+    "local_developer_1792142111885@projevo.ai": {
+      "id": "usr_bbfffb0f-f473-4432-93e2-e8a422309b47",
+      "email": "local_developer_1792142111885@projevo.ai",
+      "passwordHash": "$2b$10$gw3jxXaaXv8XbXRPiHbMjOS00JptqRkgrHAF13AmZX6nQ90nIqxju",
+      "profile": {
+        "name": "Alex Rivera",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "local_developer_1792142111885@projevo.ai",
+        "university": "Stanford University",
+        "graduationYear": "Spring 2027",
+        "skills": [],
+        "selectedInterests": []
+      },
+      "project": {
+        "id": "project-bbfffb0f",
+        "title": "Alex Rivera's Project",
+        "tagline": "Personalized engineering project workspace",
+        "status": "In Progress",
+        "matchScore": 85,
+        "healthScore": 100,
+        "readinessScore": 40,
+        "stage": "Planning & Initial Scaffolding",
+        "stageProgress": 15,
+        "techStack": [
+          "Python"
+        ],
+        "issuesCount": 0
+      },
+      "latestAnalysis": null,
+      "interviewPools": {},
+      "createdAt": "2026-10-16T09:15:12.249Z"
+    },
+    "reset_user_1792142178547@projevo.ai": {
+      "id": "usr_e579a9c3-cfa8-4576-bc07-ef32e507dc66",
+      "email": "reset_user_1792142178547@projevo.ai",
+      "passwordHash": "$2b$10$6LnRudCqPC5NUAJgIvJo4O3N6RxPsTEm5l75sK7.kv8gwnothHGju",
+      "profile": {
+        "name": "Reset User",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "reset_user_1792142178547@projevo.ai",
+        "university": "Stanford University",
+        "graduationYear": "Spring 2027",
+        "skills": [],
+        "selectedInterests": []
+      },
+      "project": {
+        "id": "project-e579a9c3",
+        "title": "Reset User's Project",
+        "tagline": "Personalized engineering project workspace",
+        "status": "In Progress",
+        "matchScore": 85,
+        "healthScore": 100,
+        "readinessScore": 40,
+        "stage": "Planning & Initial Scaffolding",
+        "stageProgress": 15,
+        "techStack": [
+          "Python"
+        ],
+        "issuesCount": 0
+      },
+      "latestAnalysis": null,
+      "interviewPools": {},
+      "createdAt": "2026-10-16T09:16:19.011Z"
+    },
+    "reset_user_1792142382026@projevo.ai": {
+      "id": "usr_7be86297-a40c-47c3-906f-1494fe31dbcd",
+      "email": "reset_user_1792142382026@projevo.ai",
+      "passwordHash": "$2b$10$kmwy8f20kRP9BZV/MXGMy.RRxaEhnUnaUmBohK6J6dkB.iGhGtvPK",
+      "profile": {
+        "name": "Reset User",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "reset_user_1792142382026@projevo.ai",
+        "university": "Stanford University",
+        "graduationYear": "Spring 2027",
+        "skills": [],
+        "selectedInterests": []
+      },
+      "project": {
+        "id": "project-7be86297",
+        "title": "Reset User's Project",
+        "tagline": "Personalized engineering project workspace",
+        "status": "In Progress",
+        "matchScore": 85,
+        "healthScore": 100,
+        "readinessScore": 40,
+        "stage": "Planning & Initial Scaffolding",
+        "stageProgress": 15,
+        "techStack": [
+          "Python"
+        ],
+        "issuesCount": 0
+      },
+      "latestAnalysis": null,
+      "interviewPools": {},
+      "createdAt": "2026-10-16T09:19:42.606Z"
+    },
+    "babysweety762@gmail.com": {
+      "id": "usr_cb0859b8-7e0f-4055-a995-83f9eac0efa4",
+      "email": "babysweety762@gmail.com",
+      "passwordHash": "$2b$10$wWr.FG0y1yVb2gNrNNUGK.Trl.qdY2j.iPkZH1qCPqBicd/TrjvFi",
+      "profile": {
+        "name": "Monika  C",
+        "role": "Engineering Student",
+        "membership": "Projevo AI Member",
+        "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
+        "email": "babysweety762@gmail.com",
+        "university": "The Apollo University",
+        "graduationYear": "Spring 2027",
+        "skills": [
+          {
+            "name": "Python",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Google Cloud",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Machine Learning",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "Natural Language Processing",
+            "level": 70,
+            "status": "have"
+          },
+          {
+            "name": "SQL",
+            "level": 30,
+            "status": "learning"
+          },
+          {
+            "name": "PyTorch",
+            "level": 30,
+            "status": "learning"
+          },
+          {
+            "name": "ai",
+            "level": 60,
+            "status": "have"
+          },
+          {
+            "name": "Pandas",
+            "level": 30,
+            "status": "have"
+          }
+        ],
+        "selectedInterests": [
+          "Artificial Intelligence & Machine Learning",
+          "Web Development",
+          "Data Science & Analytics",
+          "Cloud",
+          "Mobile Development"
+        ],
+        "college": "The Apollo University",
+        "course": "B Tech CSE",
+        "yearOfStudy": "Spring 2027",
+        "interestedRoles": [
+          "DataScientist",
+          "Cloud & DevOps Engineer",
+          "Mobile App Developer"
+        ],
+        "learningPreferences": "Hands on experience with data analysis and need to learn machine learning",
+        "onboardingGoals": "Prepare for technical interviews and build production-grade portfolio projects",
+        "github": "https://github.com/CMonika67",
+        "primaryMilestone": "Coursework & Skill Competency"
+      },
+      "project": {
+        "id": "genai-prompt-engineering-sandbox",
+        "title": "Structured Prompt Engineering & Evaluation Bench",
+        "tagline": "Interactive benchmarking workbench for testing system prompts, temperature curves, and few-shot examples against standardized test cases.",
+        "domain": "Generative AI and Large Language Models",
+        "difficulty": "Beginner",
+        "problemStatement": "Engineers building LLM applications write prompts blindly without structured A/B regression benchmarks across model parameters.",
+        "proposedSolution": "Build a clean React & Node.js application that calls the Gemini API to compare two prompt drafts across 10 evaluation test cases in parallel.",
+        "expectedOutcome": "Responsive web workbench that evaluates prompt variants, calculates scoring matrices, and flags hallucinations.",
+        "possibleExtensions": [
+          "Cost & latency tracking per prompt token",
+          "Few-shot template library",
+          "Automated prompt improvement suggestions"
+        ],
+        "feasibility": "High: Uses Google Gemini 3.8/Flash and standard web frontend.",
+        "whyRelevant": "Recommended for broadening your technical scope in Generative AI and Large Language Models.",
+        "status": "In Progress",
+        "matchScore": 50,
+        "healthScore": 85,
+        "readinessScore": 45,
+        "stage": "Requirements & Architecture",
+        "stageProgress": 25,
+        "techStack": [
+          "JavaScript",
+          "React",
+          "Node.js",
+          "Google GenAI SDK",
+          "Tailwind CSS"
+        ],
+        "issuesCount": 0
+      },
+      "latestAnalysis": {
+        "overallHealth": 52,
+        "categories": [
+          {
+            "name": "Code Quality",
+            "score": 20,
+            "status": "critical",
+            "icon": "code",
+            "note": "Syntax and import errors present: invalid deque instantiation, missing collections import, and test execution code nested within an inner loop.",
+            "analysisStatus": "scored",
+            "weight": 25
+          },
+          {
+            "name": "Security",
+            "score": 90,
+            "status": "good",
+            "icon": "security",
+            "note": "No active security vulnerabilities or unsanitized external inputs detected in this standalone algorithmic script.",
+            "analysisStatus": "scored",
+            "weight": 35
+          },
+          {
+            "name": "Brute-Force",
+            "score": -1,
+            "status": "good",
+            "icon": "gpp_bad",
+            "note": "Not detected / Not applicable.",
+            "analysisStatus": "na",
+            "reason": "Not detected / Not applicable.",
+            "weight": 0
+          },
+          {
+            "name": "Accessibility",
+            "score": -1,
+            "status": "good",
+            "icon": "accessibility_new",
+            "note": "Not detected / Not applicable.",
+            "analysisStatus": "na",
+            "reason": "Not detected / Not applicable.",
+            "weight": 0
+          },
+          {
+            "name": "Performance",
+            "score": 25,
+            "status": "critical",
+            "icon": "speed",
+            "note": "Premature returns and inadvertent recursive invocation nested inside loop structures break traversal complexity.",
+            "analysisStatus": "scored",
+            "weight": 20
+          },
+          {
+            "name": "Google Services",
+            "score": -1,
+            "status": "good",
+            "icon": "cloud_done",
+            "note": "Not detected / Not applicable.",
+            "analysisStatus": "na",
+            "reason": "Not detected / Not applicable.",
+            "weight": 0
+          }
+        ],
+        "criticalIssues": [
+          {
+            "id": "ISSUE-101",
+            "title": "Invalid Deque Invocation and Missing Import",
+            "severity": "Critical",
+            "category": "Code Quality",
+            "line": 3,
+            "recommendation": "Import `collections.deque` and instantiate it properly without the trailing syntax error `(position, steps)`.",
+            "codeSnippet": "queue = dequeue([(start, 0)])(position, steps)",
+            "suggestedPatch": "from collections import deque\nqueue = deque([(start, 0)])"
+          },
+          {
+            "id": "ISSUE-102",
+            "title": "Nested Execution Code and Infinite Recursion",
+            "severity": "Critical",
+            "category": "Code Quality",
+            "line": 20,
+            "recommendation": "Move driver code and grid definitions outside of the `find_shortest_path` function scope under an `if __name__ == '__main__':` guard.",
+            "codeSnippet": "            grid = [[1, 0, 1],\n                    [1, 1, 1], \n                    [1, 0, 1]]\n            start = (0, 0)\n            end = (2, 2)\n            move_rule = (1, 2)\n            result= find_shortest_path(grid, start, end, move_rule)",
+            "suggestedPatch": "if __name__ == '__main__':\n    grid = [[1, 0, 1], [1, 1, 1], [1, 0, 1]]\n    start = (0, 0)\n    end = (2, 2)\n    move_rule = (1, 2)\n    result = find_shortest_path(grid, start, end, move_rule)\n    print(result)"
+          },
+          {
+            "id": "ISSUE-103",
+            "title": "Premature Return in Neighbor Traversal",
+            "severity": "High",
+            "category": "Performance",
+            "line": 19,
+            "recommendation": "Remove `return -1` from within the neighbor loop; return `-1` only after the BFS queue is completely exhausted.",
+            "codeSnippet": "                queue.append((next_pos, steps + 1))\n                return-1",
+            "suggestedPatch": "                queue.append((next_pos, steps + 1))\n    return -1"
+          }
+        ],
+        "analyzedAt": "2026-10-20T18:05:43.611Z"
+      },
+      "interviewPools": {
+        "Distributed Industrial Vision & Sensor Anomaly Detection": [
+          {
+            "id": "q-intro",
+            "category": "Project Introduction & Motivation",
+            "difficulty": "Easy",
+            "question": "In simple terms, what is Distributed Industrial Vision & Sensor Anomaly Detection, what problem does it solve, and who are its primary users?",
+            "whyAsked": "To evaluate candidate clarity of communication, problem framing, and ability to describe technical value succinctly.",
+            "keyPoints": [
+              "State problem concisely without getting lost in implementation minutiae",
+              "Highlight target user persona and why existing approaches fell short",
+              "Explain primary system output and tangible engineering impact"
+            ],
+            "exampleAnswer": "In Distributed Industrial Vision & Sensor Anomaly Detection, our primary objective was solving High-speed assembly lines experience expensive hardware recalls due to microscopic surface fractures. We engineered a modular system using Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI to deliver verifiable, low-latency performance.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-tech",
+            "category": "Technology Stack & Alternatives",
+            "difficulty": "Easy",
+            "question": "Why did you choose Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI for Distributed Industrial Vision & Sensor Anomaly Detection? What are its main advantages for this type of application?",
+            "whyAsked": "To assess technology evaluation maturity, dependency justification, and trade-off awareness.",
+            "keyPoints": [
+              "Justify choosing Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI over competing frameworks",
+              "Explain how the stack satisfies latency and operational constraints",
+              "Acknowledge trade-offs (e.g. learning curve, memory overhead, cold starts)"
+            ],
+            "exampleAnswer": "We selected Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI because it satisfied our operational latency budget. We considered heavier monolithic options, but prioritized lightweight async boundaries to ensure fast iteration and low memory usage under concurrent load.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-role",
+            "category": "Personal Role & Contribution",
+            "difficulty": "Easy",
+            "question": "What was your specific personal contribution to Distributed Industrial Vision & Sensor Anomaly Detection, and what was the most difficult technical decision you personally made?",
+            "whyAsked": "To evaluate individual ownership, depth of hands-on technical execution, and autonomy.",
+            "keyPoints": [
+              "Directly state personal components and code modules owned",
+              "Describe a concrete roadblock encountered during implementation",
+              "Explain how you resolved the roadblock and validated the fix"
+            ],
+            "exampleAnswer": "My primary contribution was Led backend API design, pipeline integration, error handling, and unit test coverage.. A key hurdle I tackled was handling state consistency during concurrent updates, which I solved by introducing atomic transactions and defensive input validation.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-impl",
+            "category": "Implementation Details & Algorithms",
+            "difficulty": "Easy",
+            "question": "What were the core data structures used in Distributed Industrial Vision & Sensor Anomaly Detection to represent and manipulate data?",
+            "whyAsked": "To verify computer science fundamentals, algorithmic efficiency, and memory awareness.",
+            "keyPoints": [
+              "State Big-O time and space complexity accurately",
+              "Explain why specific data structures were chosen over generic arrays",
+              "Highlight caching or indexing techniques that reduced latency"
+            ],
+            "exampleAnswer": "We indexed records using hash-based lookups to maintain O(1) retrieval times. In our core processing loop, we eliminated nested scans by pre-aggregating data into hash tables, reducing execution time from seconds to milliseconds.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-debug",
+            "category": "Debugging & Real-World Edge Cases",
+            "difficulty": "Easy",
+            "question": "Can you describe a bug you encountered while building Distributed Industrial Vision & Sensor Anomaly Detection and how you diagnosed and fixed it?",
+            "whyAsked": "To evaluate systematic debugging instincts, root-cause analysis, and regression testing discipline.",
+            "keyPoints": [
+              "Identify the symptom vs the underlying root cause",
+              "Describe the telemetry, logs, or debugging tools used",
+              "Explain the automated test written to prevent regressions"
+            ],
+            "exampleAnswer": "During integration testing, we observed intermittent null reference exceptions under rapid succession. By inspecting the async promise chain, I discovered an unawaited database write. I resolved it by wrapping the operation in an atomic transaction and added integration tests.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-scale",
+            "category": "Scalability, Concurrency & Security",
+            "difficulty": "Easy",
+            "question": "What security measures did you implement in Distributed Industrial Vision & Sensor Anomaly Detection to protect user data and prevent common vulnerabilities?",
+            "whyAsked": "To evaluate systems design thinking, bottleneck identification, and security best practices.",
+            "keyPoints": [
+              "Input sanitization, secure auth tokens, and HTTPS encryption",
+              "Propose horizontal scaling, Redis caching, or message queue decoupling",
+              "Enforce least-privilege access and rate limiting"
+            ],
+            "exampleAnswer": "Under extreme traffic, our primary database connection pool would saturate first. To mitigate this, we decouple incoming writes using an asynchronous queue and deploy Redis caching for read-heavy endpoints, backed by token-bucket rate limiters.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-role-target",
+            "category": "Role-Specific & Behavioral Defense",
+            "difficulty": "Easy",
+            "question": "How does your hands-on engineering experience building Distributed Industrial Vision & Sensor Anomaly Detection directly prepare you to succeed as a Full Stack / Backend Software Engineer?",
+            "whyAsked": "To evaluate candidate self-awareness and direct alignment with target hiring expectations.",
+            "keyPoints": [
+              "Connect experience in Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI to expectations of a Full Stack / Backend Software Engineer",
+              "Demonstrate proactive ownership, testing discipline, and adaptability",
+              "Express genuine enthusiasm for contributing high-quality code to production"
+            ],
+            "exampleAnswer": "Building Distributed Industrial Vision & Sensor Anomaly Detection gave me end-to-end ownership—from requirement scoping to writing resilient backend services in Python, PyTorch, OpenCV, TensorRT, CUDA, FastAPI. As a Full Stack / Backend Software Engineer, I will bring that same rigorous mindset to building scalable, well-tested production systems.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-google-sourced-01",
+            "category": "Scalability & Fault Tolerance",
+            "difficulty": "Hard",
+            "isSourced": true,
+            "sourceCompany": "Google Public SRE & Distributed Systems Interview Archive",
+            "question": "In a high-throughput distributed system like Distributed Industrial Vision & Sensor Anomaly Detection, how do you implement graceful degradation and backpressure to protect downstream dependencies when tail latencies spike?",
+            "whyAsked": "Standard Google engineering interview evaluation for handling cascading failures and preserving system availability under adverse conditions.",
+            "keyPoints": [
+              "Differentiate between hard failure and soft degradation (circuit breakers)",
+              "Explain token bucket or adaptive concurrency limiting algorithms",
+              "Discuss asynchronous message buffering and load shedding policies"
+            ],
+            "exampleAnswer": "In Distributed Industrial Vision & Sensor Anomaly Detection, when downstream components experience contention, we introduce circuit-breaker patterns with exponential backoff and jitter, shedding non-essential background telemetry to preserve critical path availability."
+          }
+        ],
+        "An edge-computed audio classifier System": [
+          {
+            "id": "q-intro",
+            "category": "Project Introduction & Motivation",
+            "difficulty": "Medium",
+            "question": "Can you walk me through the high-level architecture of An edge-computed audio classifier System and why your team adopted this solution approach?",
+            "whyAsked": "To evaluate candidate clarity of communication, problem framing, and ability to describe technical value succinctly.",
+            "keyPoints": [
+              "State problem concisely without getting lost in implementation minutiae",
+              "Highlight target user persona and why existing approaches fell short",
+              "Explain primary system output and tangible engineering impact"
+            ],
+            "exampleAnswer": "In An edge-computed audio classifier System, our primary objective was solving An edge-computed audio classifier to assist hearing-impaired students in large lecture halls.. We engineered a modular system using Python, PyTorch, FastAPI, NumPy, Docker to deliver verifiable, low-latency performance.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-tech",
+            "category": "Technology Stack & Alternatives",
+            "difficulty": "Medium",
+            "question": "Why did you select Python, PyTorch, FastAPI, NumPy, Docker for An edge-computed audio classifier System, and how did it satisfy your performance and developer ergonomics requirements?",
+            "whyAsked": "To assess technology evaluation maturity, dependency justification, and trade-off awareness.",
+            "keyPoints": [
+              "Justify choosing Python, PyTorch, FastAPI, NumPy, Docker over competing frameworks",
+              "Explain how the stack satisfies latency and operational constraints",
+              "Acknowledge trade-offs (e.g. learning curve, memory overhead, cold starts)"
+            ],
+            "exampleAnswer": "We selected Python, PyTorch, FastAPI, NumPy, Docker because it satisfied our operational latency budget. We considered heavier monolithic options, but prioritized lightweight async boundaries to ensure fast iteration and low memory usage under concurrent load.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-role",
+            "category": "Personal Role & Contribution",
+            "difficulty": "Medium",
+            "question": "What was your specific personal contribution to An edge-computed audio classifier System, and what was the most difficult technical decision you personally made?",
+            "whyAsked": "To evaluate individual ownership, depth of hands-on technical execution, and autonomy.",
+            "keyPoints": [
+              "Directly state personal components and code modules owned",
+              "Describe a concrete roadblock encountered during implementation",
+              "Explain how you resolved the roadblock and validated the fix"
+            ],
+            "exampleAnswer": "My primary contribution was Led backend API design, pipeline integration, error handling, and unit test coverage.. A key hurdle I tackled was handling state consistency during concurrent updates, which I solved by introducing atomic transactions and defensive input validation.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-impl",
+            "category": "Implementation Details & Algorithms",
+            "difficulty": "Medium",
+            "question": "How did you structure the data flow and boundary validation in An edge-computed audio classifier System to prevent malformed payloads?",
+            "whyAsked": "To verify computer science fundamentals, algorithmic efficiency, and memory awareness.",
+            "keyPoints": [
+              "State Big-O time and space complexity accurately",
+              "Explain why specific data structures were chosen over generic arrays",
+              "Highlight caching or indexing techniques that reduced latency"
+            ],
+            "exampleAnswer": "We indexed records using hash-based lookups to maintain O(1) retrieval times. In our core processing loop, we eliminated nested scans by pre-aggregating data into hash tables, reducing execution time from seconds to milliseconds.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-debug",
+            "category": "Debugging & Real-World Edge Cases",
+            "difficulty": "Medium",
+            "question": "Tell me about an unexpected edge case or failure mode that occurred during testing of An edge-computed audio classifier System. How did you identify the root cause?",
+            "whyAsked": "To evaluate systematic debugging instincts, root-cause analysis, and regression testing discipline.",
+            "keyPoints": [
+              "Identify the symptom vs the underlying root cause",
+              "Describe the telemetry, logs, or debugging tools used",
+              "Explain the automated test written to prevent regressions"
+            ],
+            "exampleAnswer": "During integration testing, we observed intermittent null reference exceptions under rapid succession. By inspecting the async promise chain, I discovered an unawaited database write. I resolved it by wrapping the operation in an atomic transaction and added integration tests.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-scale",
+            "category": "Scalability, Concurrency & Security",
+            "difficulty": "Medium",
+            "question": "How does An edge-computed audio classifier System handle concurrent requests, and how did you protect against OWASP Top 10 vulnerabilities?",
+            "whyAsked": "To evaluate systems design thinking, bottleneck identification, and security best practices.",
+            "keyPoints": [
+              "Input sanitization, secure auth tokens, and HTTPS encryption",
+              "Propose horizontal scaling, Redis caching, or message queue decoupling",
+              "Enforce least-privilege access and rate limiting"
+            ],
+            "exampleAnswer": "Under extreme traffic, our primary database connection pool would saturate first. To mitigate this, we decouple incoming writes using an asynchronous queue and deploy Redis caching for read-heavy endpoints, backed by token-bucket rate limiters.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-role-target",
+            "category": "Role-Specific & Behavioral Defense",
+            "difficulty": "Medium",
+            "question": "How does your hands-on engineering experience building An edge-computed audio classifier System directly prepare you to succeed as a Full Stack / Backend Software Engineer?",
+            "whyAsked": "To evaluate candidate self-awareness and direct alignment with target hiring expectations.",
+            "keyPoints": [
+              "Connect experience in Python, PyTorch, FastAPI, NumPy, Docker to expectations of a Full Stack / Backend Software Engineer",
+              "Demonstrate proactive ownership, testing discipline, and adaptability",
+              "Express genuine enthusiasm for contributing high-quality code to production"
+            ],
+            "exampleAnswer": "Building An edge-computed audio classifier System gave me end-to-end ownership—from requirement scoping to writing resilient backend services in Python, PyTorch, FastAPI, NumPy, Docker. As a Full Stack / Backend Software Engineer, I will bring that same rigorous mindset to building scalable, well-tested production systems.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-google-sourced-01",
+            "category": "Scalability & Fault Tolerance",
+            "difficulty": "Hard",
+            "isSourced": true,
+            "sourceCompany": "Google Public SRE & Distributed Systems Interview Archive",
+            "question": "In a high-throughput distributed system like An edge-computed audio classifier System, how do you implement graceful degradation and backpressure to protect downstream dependencies when tail latencies spike?",
+            "whyAsked": "Standard Google engineering interview evaluation for handling cascading failures and preserving system availability under adverse conditions.",
+            "keyPoints": [
+              "Differentiate between hard failure and soft degradation (circuit breakers)",
+              "Explain token bucket or adaptive concurrency limiting algorithms",
+              "Discuss asynchronous message buffering and load shedding policies"
+            ],
+            "exampleAnswer": "In An edge-computed audio classifier System, when downstream components experience contention, we introduce circuit-breaker patterns with exponential backoff and jitter, shedding non-essential background telemetry to preserve critical path availability."
+          }
+        ]
+      },
+      "createdAt": "2026-10-16T10:48:47.945Z",
+      "learningProgress": {
+        "ai-multimodal-defect-detector": {
+          "completedMilestones": [
+            "Python"
+          ]
+        }
+      },
+      "analyzedIdeas": [
+        {
+          "title": "An edge-computed audio classifier System",
+          "tagline": "Architectural blueprint for An edge-computed audio classifier to assist hearing-impaired students in large l...",
+          "domain": "AI / ML",
+          "problemStatement": "An edge-computed audio classifier to assist hearing-impaired students in large lecture halls.",
+          "targetUsers": "Hearing-impaired college students and accessibility coordinators",
+          "proposedSolution": "A modular service combining Python and PyTorch for reliable input processing and verifiable persistence.",
+          "keyFeatures": [
+            "Secure REST / streaming API endpoints with strict schema validation",
+            "Decoupled worker queue for computationally intensive operations",
+            "Persistent relational / time-series data storage with transactional consistency",
+            "Automated health check probes and telemetry metrics export"
+          ],
+          "feasibility": "High",
+          "feasibilityRationale": "The concept utilizes established open-source tools with mature ecosystem support and manageable computational overhead.",
+          "assumptions": [
+            "User-provided problem statement reflects realistic operational constraints",
+            "Standard commodity cloud compute or local developer environments are sufficient for initial prototyping"
+          ],
+          "limitations": [
+            "Initial prototype will focus on single-tenant deployment before distributed horizontal scaling",
+            "Cold-start latency must be evaluated under concurrent peak loads"
+          ],
+          "recommendedTechnologies": [
+            {
+              "tech": "Python",
+              "role": "Core Language",
+              "justification": "Industry standard tool offering proven stability and broad open-source library availability for AI / ML."
+            },
+            {
+              "tech": "PyTorch",
+              "role": "Primary Framework",
+              "justification": "Industry standard tool offering proven stability and broad open-source library availability for AI / ML."
+            },
+            {
+              "tech": "FastAPI",
+              "role": "Persistence / Protocol",
+              "justification": "Industry standard tool offering proven stability and broad open-source library availability for AI / ML."
+            },
+            {
+              "tech": "NumPy",
+              "role": "Infrastructure",
+              "justification": "Industry standard tool offering proven stability and broad open-source library availability for AI / ML."
+            },
+            {
+              "tech": "Docker",
+              "role": "Infrastructure",
+              "justification": "Industry standard tool offering proven stability and broad open-source library availability for AI / ML."
+            }
+          ],
+          "suggestedArchitecture": "Three-tier modular architecture: 1) Client presentation / ingestion layer, 2) Stateless application service running PyTorch, and 3) Relational database and object storage.",
+          "components": [
+            {
+              "name": "Ingestion Gateway",
+              "purpose": "Validates incoming payloads and enforces rate limiting"
+            },
+            {
+              "name": "Core Processing Service",
+              "purpose": "Executes domain business logic and data transformations"
+            },
+            {
+              "name": "Storage Engine",
+              "purpose": "Maintains durable ACID state and audit histories"
+            }
+          ],
+          "requiredSkills": [
+            "Python",
+            "PyTorch",
+            "FastAPI"
+          ],
+          "prerequisites": [
+            "Basic CLI & Git workflow",
+            "Relational database schema design",
+            "Unit testing fundamentals"
+          ],
+          "dataSourcesAndIntegrations": [
+            "Public open-access domain datasets",
+            "Standard HTTP REST APIs"
+          ],
+          "roadmap": [
+            {
+              "phase": "Phase 1: Architecture & Scaffolding",
+              "title": "Data modeling & repository skeleton",
+              "duration": "1 week",
+              "deliverables": [
+                "Database migration scripts",
+                "Environment configuration"
+              ]
+            },
+            {
+              "phase": "Phase 2: Core Implementation",
+              "title": "Business logic & API endpoints",
+              "duration": "2 weeks",
+              "deliverables": [
+                "Functional controller routes",
+                "Integration with data processors"
+              ]
+            },
+            {
+              "phase": "Phase 3: Hardening & Testing",
+              "title": "Security audits & test suites",
+              "duration": "1 week",
+              "deliverables": [
+                "Automated test suite (min 80% coverage)",
+                "Input sanitization"
+              ]
+            },
+            {
+              "phase": "Phase 4: Capstone Defense",
+              "title": "Deployment & verification report",
+              "duration": "1 week",
+              "deliverables": [
+                "Docker container",
+                "Comprehensive documentation"
+              ]
+            }
+          ],
+          "testingStrategy": "Unit tests for computational functions, integration tests for API endpoints, and end-to-end regression validation.",
+          "securityAndPrivacy": "Input payload sanitization, parameterized queries to prevent SQL injection, and secret separation via environment variables.",
+          "risksAndMitigations": [
+            {
+              "risk": "Data ingestion bottlenecks under high concurrency",
+              "impact": "Medium",
+              "mitigation": "Introduce asynchronous job queue and worker pooling."
+            },
+            {
+              "risk": "Dependency version divergence across environments",
+              "impact": "Low",
+              "mitigation": "Standardize containerized builds using pinned Docker manifests."
+            }
+          ],
+          "expectedDeliverables": [
+            "Working codebase with reproducible local setup instructions",
+            "Automated test suite verifying critical happy-path and error cases",
+            "Architecture design document with component diagrams"
+          ],
+          "evaluationCriteria": [
+            "Sub-200ms 95th percentile response latency on standard queries",
+            "Zero critical security defects on static analysis audit",
+            "Clean, documented API contracts adhering to REST conventions"
+          ],
+          "suggestedNextSteps": [
+            "Initialize Git repository with structured module folders",
+            "Define initial schema models and write a smoke test",
+            "Begin Phase 1 implementation in Projevo AI workspace"
+          ],
+          "milestones": [
+            "Phase 1: Architecture & Scaffolding",
+            "Phase 2: Core Implementation",
+            "Phase 3: Hardening & Testing",
+            "Phase 4: Capstone Defense"
+          ],
+          "techStack": [
+            "Python",
+            "PyTorch",
+            "FastAPI",
+            "NumPy",
+            "Docker"
+          ],
+          "matchScore": 88,
+          "estimatedWeeks": 5,
+          "analyzedAt": "2026-10-20T17:48:16.624Z"
+        }
+      ]
+    }
+  },
+  "sessions": {
+    "7aa18ea2199449fb52ca8ac59e5d97bcbf4a5f35b6d3f6b13d583defd126aac7": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792142111868,
+      "expiresAt": 1792746911868
+    },
+    "f960753b0911f9bd9061fb9c40cc2d69f5f831e865dbdb6b5097174944c11934": {
+      "userId": "usr_bbfffb0f-f473-4432-93e2-e8a422309b47",
+      "email": "local_developer_1792142111885@projevo.ai",
+      "createdAt": 1792142112685,
+      "expiresAt": 1792746912685
+    },
+    "ce6cfd18ba62b74e24ce071139412ab21e6f2a91a3daa26285d9c02049f11478": {
+      "userId": "usr_bbfffb0f-f473-4432-93e2-e8a422309b47",
+      "email": "local_developer_1792142111885@projevo.ai",
+      "createdAt": 1792142130888,
+      "expiresAt": 1792746930888
+    },
+    "eed4de765a991fa319e129ecfc59fb8b7445c9e9071679a59a98f62d6a714bde": {
+      "userId": "usr_e579a9c3-cfa8-4576-bc07-ef32e507dc66",
+      "email": "reset_user_1792142178547@projevo.ai",
+      "createdAt": 1792142179440,
+      "expiresAt": 1792746979440
+    },
+    "4653d4a72a20214b92874c9a91404105495026754fb7b59f01c1121086d47956": {
+      "userId": "usr_7be86297-a40c-47c3-906f-1494fe31dbcd",
+      "email": "reset_user_1792142382026@projevo.ai",
+      "createdAt": 1792142383887,
+      "expiresAt": 1792747183887
+    },
+    "641abe947ab9a971f8f24187fcfbf98e95c25cfb285cbc681dcb349428e9830d": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792385020906,
+      "expiresAt": 1792989820906
+    },
+    "48cf225667d727804d518e3510d451cc959cf6ac502cc160172e30263a07b3b3": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792385339410,
+      "expiresAt": 1792990139410
+    },
+    "579a1e2b2ad01003c09a10bc453467c91fe45c5966b2cb1d882d64447e117029": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792385354893,
+      "expiresAt": 1792990154893
+    },
+    "d7b7742a5024226d3ca641151d3e96e87a41568e457e02461859b8d81da406b8": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792385362117,
+      "expiresAt": 1792990162117
+    },
+    "15ee60937cfe684e3bcfb0c4dbd374e8fe29a1b38cf7ea2ffae0141e5fc69e39": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792385369428,
+      "expiresAt": 1792990169428
+    },
+    "f7b1d6d539684eeb1fb7288e89bba6073a9faeb4afa85682baeb2c10d7a7f512": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792386702390,
+      "expiresAt": 1792991502390
+    },
+    "7a53bbf6aa8fe91ec47d579ad942f8e89f67a19e6a411367fb8d661af49ef1fd": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792386712327,
+      "expiresAt": 1792991512327
+    },
+    "09cb850f6988e6dcc09d632f0fefcb4a207c5bbfef9ad4322d9f5c5e48c5819f": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792386721486,
+      "expiresAt": 1792991521486
+    },
+    "9d9a8b5add014ddfebe7b7ce1cf808ee9a67d891e9c8d29c7c64e8c3f1530d79": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792386731295,
+      "expiresAt": 1792991531295
+    },
+    "a104377e01c4fe4116f506ef54c8819279f0c0933f2c0c66fb8a842102c3c67a": {
+      "userId": "usr_monika_001",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792386740017,
+      "expiresAt": 1792991540017
+    },
+    "bc6d507ec3f45571c57c899b81a0a04d61e1dbe163d39a81a3336738f11534ee": {
+      "userId": "951bede6-3f09-4d1b-876b-750d59300f3b",
+      "email": "monikacherukuri667@gmail.com",
+      "createdAt": 1792819419973,
+      "expiresAt": 1793424219973
+    }
+  },
+  "passwordResetCodes": {
+    "livetest@stanford.edu": {
+      "code": "985656",
+      "resetToken": "cdcb1599-3ae0-4f85-af79-b5b7c7ec1746",
+      "expiresAt": 1792141040224,
+      "attempts": 0,
+      "verified": false
+    },
+    "local_developer_1792142111885@projevo.ai": {
+      "code": "771689",
+      "resetToken": "842ecebf-beb0-4694-af38-81f0f2424a69",
+      "expiresAt": 1792142712749,
+      "attempts": 1,
+      "verified": true
+    },
+    "reset_user_1792142178547@projevo.ai": {
+      "code": "304161",
+      "resetToken": "6dcfc3bd-a687-4566-abcb-d18672ee1b9d",
+      "expiresAt": 1792142779047,
+      "attempts": 1,
+      "verified": true
+    },
+    "monikacherukuri667@gmail.com": {
+      "code": "195783",
+      "resetToken": "75cff1e8-9246-40e8-9f2f-5cd55307b122",
+      "expiresAt": 1792507199762,
+      "attempts": 0,
+      "verified": false
+    }
+  }
+}
