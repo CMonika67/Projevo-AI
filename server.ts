@@ -4184,10 +4184,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       project: user.project
     };
 
-    // Include token in test environment for integration test assertions
-    if (process.env.NODE_ENV === 'test') {
-      responseData.token = token;
-    }
+    // Always include token in responseData so client can store it in localStorage
+    responseData.token = token;
 
     res.json(responseData);
   } catch (err: any) {
@@ -4890,6 +4888,21 @@ const handleAuthExchangeCallback = async (req: express.Request, res: express.Res
       profile = await dbGetProfile(verified.userId);
       project = await dbGetActiveProject(verified.userId);
     }
+    const db = readDB();
+    const userEmailLower = verified.userEmail.toLowerCase();
+    if (!profile && db.users && db.users[userEmailLower]) {
+      profile = db.users[userEmailLower].profile;
+      if (!project) project = db.users[userEmailLower].project;
+    }
+
+    if (!db.sessions) db.sessions = {};
+    db.sessions[authToken] = {
+      userId: verified.userId,
+      email: userEmailLower,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
+    };
+    writeDB(db);
 
     res.cookie('token', authToken, {
       httpOnly: true,

@@ -28,6 +28,7 @@ import { IdeaAnalyzerModal } from './components/IdeaAnalyzerModal';
 import { UserAvatar } from './components/UserAvatar';
 import { safeApiFetch } from './api';
 import { firebaseSignOut } from './firebase';
+import { getSupabase } from './supabase';
 
 // Utility helpers to synchronize URL paths with ScreenType
 function getScreenFromPath(pathname: string): ScreenType {
@@ -185,14 +186,39 @@ export default function App() {
 
           if (hashToken) {
             localStorage.setItem('token', hashToken);
-            if (window.opener && !window.opener.closed) {
-              try {
-                window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', token: hashToken }, window.location.origin);
-                window.close();
+            try {
+              const callbackRes = await safeApiFetch('/api/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ token: hashToken })
+              });
+              if (callbackRes?.token) {
+                if (window.opener && !window.opener.closed) {
+                  try {
+                    window.opener.postMessage({
+                      type: 'GOOGLE_AUTH_SUCCESS',
+                      token: callbackRes.token,
+                      profile: callbackRes.profile,
+                      project: callbackRes.project,
+                      email: callbackRes.email
+                    }, window.location.origin);
+                    window.close();
+                    return;
+                  } catch (e) {
+                    console.warn('Could not postMessage to opener:', e);
+                  }
+                }
+                if (callbackRes.profile) setProfile(callbackRes.profile);
+                if (callbackRes.project) setProject(callbackRes.project);
+                setIsAuthenticated(true);
+                window.history.replaceState(null, '', '/');
+                setCurrentScreen('dashboard');
+                setIsValidatingSession(false);
                 return;
-              } catch (e) {
-                console.warn('Could not postMessage to opener:', e);
               }
+            } catch (hErr) {
+              console.warn('Error syncing hash token with server:', hErr);
             }
             window.history.replaceState(null, '', window.location.pathname);
           }
@@ -248,12 +274,31 @@ export default function App() {
       const authCode = searchParams.get('code');
       if (authCode) {
         try {
+          let authToken: string | null = null;
+          let authEmail: string = '';
+
+          // A. Attempt client-side Supabase exchange using browser's stored PKCE verifier
+          const sb = getSupabase();
+          if (sb) {
+            try {
+              const { data: exchangeData, error: exchangeErr } = await sb.auth.exchangeCodeForSession(authCode);
+              if (!exchangeErr && exchangeData?.session?.access_token) {
+                authToken = exchangeData.session.access_token;
+                authEmail = exchangeData.session.user?.email || '';
+              }
+            } catch (clientExErr) {
+              console.warn('Client exchangeCodeForSession failed, falling back to server:', clientExErr);
+            }
+          }
+
+          // B. Send token (or raw code) to /api/auth/callback to establish backend session and user data
           const data = await safeApiFetch('/api/auth/callback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ code: authCode })
+            body: JSON.stringify({ code: authCode, token: authToken, email: authEmail })
           });
+
           if (data?.token) {
             localStorage.setItem('token', data.token);
             if (window.opener && !window.opener.closed) {
@@ -445,10 +490,24 @@ export default function App() {
     return (
       <LoginView
         initialRecoveryToken={recoveryToken}
-        onLoginSuccess={(email: string, token: any, userProfile?: any, userProject?: any) => {
-          const effectiveToken = typeof token === 'string' ? token : (typeof userProject === 'string' ? userProject : localStorage.getItem('token') || '');
-          const effectiveProfile = typeof token === 'object' && token !== null ? token : (userProfile || emptyProfile);
-          const effectiveProject = typeof userProfile === 'object' && userProfile !== null && !userProfile.email && !userProfile.name ? userProfile : (userProject || null);
+        onLoginSuccess={(email: string, userProfile?: any, userProject?: any, token?: string) => {
+          const effectiveToken = typeof token === 'string' && token.length > 0
+            ? token
+            : (typeof userProfile === 'string' && userProfile.length > 0
+                ? userProfile
+                : localStorage.getItem('token') || '');
+
+          const effectiveProfile = typeof userProfile === 'object' && userProfile !== null
+            ? userProfile
+            : (typeof userProject === 'object' && userProject !== null && userProject.name
+                ? userProject
+                : emptyProfile);
+
+          const effectiveProject = typeof userProject === 'object' && userProject !== null && !userProject.email && !userProject.name
+            ? userProject
+            : (typeof userProfile === 'object' && userProfile !== null && !userProfile.email && !userProfile.name
+                ? userProfile
+                : null);
 
           if (effectiveToken) {
             localStorage.setItem('token', effectiveToken);

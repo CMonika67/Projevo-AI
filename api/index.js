@@ -1874,10 +1874,13 @@ function getSupabase2() {
     return null;
   }
   if (!clientInstance) {
+    const isBrowser = typeof window !== "undefined";
     clientInstance = createClient2(getSupabaseUrl(), getSupabaseKey(), {
       auth: {
-        persistSession: false,
-        autoRefreshToken: false
+        persistSession: isBrowser,
+        autoRefreshToken: isBrowser,
+        detectSessionInUrl: isBrowser,
+        flowType: "pkce"
       }
     });
   }
@@ -5450,9 +5453,7 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
       profile: user.profile,
       project: user.project
     };
-    if (process.env.NODE_ENV === "test") {
-      responseData.token = token;
-    }
+    responseData.token = token;
     res.json(responseData);
   } catch (err) {
     res.status(500).json({ error: err.message || "Login failed" });
@@ -6035,6 +6036,20 @@ var handleAuthExchangeCallback = async (req, res) => {
       profile = await dbGetProfile(verified.userId);
       project = await dbGetActiveProject(verified.userId);
     }
+    const db = readDB();
+    const userEmailLower = verified.userEmail.toLowerCase();
+    if (!profile && db.users && db.users[userEmailLower]) {
+      profile = db.users[userEmailLower].profile;
+      if (!project) project = db.users[userEmailLower].project;
+    }
+    if (!db.sessions) db.sessions = {};
+    db.sessions[authToken] = {
+      userId: verified.userId,
+      email: userEmailLower,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1e3
+    };
+    writeDB(db);
     res.cookie("token", authToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

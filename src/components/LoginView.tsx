@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScreenType } from '../types';
 import { safeApiFetch } from '../api';
 import { isFirebaseConfigured, signInWithGoogle } from '../firebase';
+import { getSupabase } from '../supabase';
 
 interface LoginViewProps {
   onLoginSuccess: (email: string, userProfile?: any, userProject?: any, token?: string) => void;
@@ -208,22 +209,52 @@ export const LoginView: React.FC<LoginViewProps> = ({
     // Default: Supabase Google OAuth centered popup with redirect fallback
     try {
       const redirectUri = window.location.origin + '/login';
-      const data = await safeApiFetch(`/api/auth/google/url?redirectTo=${encodeURIComponent(redirectUri)}`);
-      if (data?.url) {
+      let oauthUrl: string | null = null;
+
+      // 1. Initiate via client Supabase so PKCE code verifier is written into browser localStorage
+      const sb = getSupabase();
+      if (sb) {
+        try {
+          const { data: sbData, error: sbError } = await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: redirectUri,
+              skipBrowserRedirect: true,
+              queryParams: {
+                prompt: 'select_account',
+                access_type: 'offline'
+              }
+            }
+          });
+          if (!sbError && sbData?.url) {
+            oauthUrl = sbData.url;
+          }
+        } catch (sbErr) {
+          console.warn('Client Supabase OAuth init failed, falling back to server API:', sbErr);
+        }
+      }
+
+      // 2. Fallback to server endpoint if client Supabase did not return URL
+      if (!oauthUrl) {
+        const data = await safeApiFetch(`/api/auth/google/url?redirectTo=${encodeURIComponent(redirectUri)}`);
+        oauthUrl = data?.url || null;
+      }
+
+      if (oauthUrl) {
         const width = 500;
         const height = 650;
         const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
         const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
 
         const popup = window.open(
-          data.url,
+          oauthUrl,
           'google_account_selection',
           `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
         );
 
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           // If popup is blocked by the browser, fallback smoothly to full page redirect
-          window.location.href = data.url;
+          window.location.href = oauthUrl;
           return;
         }
 

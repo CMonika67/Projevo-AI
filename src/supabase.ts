@@ -44,10 +44,13 @@ export function getSupabase(): SupabaseClient | null {
     return null;
   }
   if (!clientInstance) {
+    const isBrowser = typeof window !== 'undefined';
     clientInstance = createClient(getSupabaseUrl(), getSupabaseKey(), {
       auth: {
-        persistSession: false,
-        autoRefreshToken: false
+        persistSession: isBrowser,
+        autoRefreshToken: isBrowser,
+        detectSessionInUrl: isBrowser,
+        flowType: 'pkce'
       }
     });
   }
