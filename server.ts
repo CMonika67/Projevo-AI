@@ -4059,6 +4059,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
+    let authErr: any = null;
     // If Supabase Auth is configured, delegate sign-in to Supabase
     const sb = getSupabase();
     if (sb) {
@@ -4112,7 +4113,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         }
 
         // Supabase Auth returned an error (e.g. unconfirmed email)
-        const authErr = getLastSupabaseAuthError();
+        authErr = getLastSupabaseAuthError();
         if (authErr?.isEmailNotConfirmed) {
           return res.status(400).json({
             error: authErr?.message || 'Invalid credentials',
@@ -4130,7 +4131,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const user = db.users ? db.users[normalizedEmail] : null;
 
     if (!user) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ error: authErr?.message || 'Invalid credentials' });
     }
 
     // Verify password with bcrypt
@@ -4148,7 +4149,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     }
 
     if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ error: authErr?.message || 'Invalid credentials' });
     }
 
     // Generate secure 256-bit cryptographically random session token

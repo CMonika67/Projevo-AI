@@ -1027,11 +1027,13 @@ function getPgPool() {
     return null;
   }
 }
+var DEFAULT_SUPABASE_URL = "https://ubzlknzzxszlmakzlpki.supabase.co";
+var DEFAULT_SUPABASE_KEY = "sb_publishable_URRx_w0tQbtwdwciiajHaw_sYmM6Bfu";
 function getSupabase() {
   if (supabaseDisabledForTesting) return null;
   if (supabaseClient) return supabaseClient;
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_KEY;
   if (!supabaseUrl || !supabaseKey) {
     return null;
   }
@@ -1366,6 +1368,9 @@ async function supabaseGetOAuthUrl(provider = "google", redirectTo) {
   const targetUrl = redirectTo || `${process.env.APP_URL || ""}/login`;
   const delimiter = targetUrl.includes("?") ? "&" : "?";
   const mockOAuthUrl = `${targetUrl}${delimiter}code=mock_google_oauth_success`;
+  if (supabaseDisabledForTesting) {
+    return { url: mockOAuthUrl };
+  }
   const sb = getSupabase();
   if (!sb) {
     return { url: mockOAuthUrl };
@@ -1374,7 +1379,11 @@ async function supabaseGetOAuthUrl(provider = "google", redirectTo) {
     const { data, error } = await sb.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: targetUrl
+        redirectTo: targetUrl,
+        queryParams: {
+          prompt: "select_account",
+          access_type: "offline"
+        }
       }
     });
     if (error) {
@@ -1846,11 +1855,13 @@ function getEnv(key) {
   }
   return "";
 }
+var DEFAULT_SUPABASE_URL2 = "https://ubzlknzzxszlmakzlpki.supabase.co";
+var DEFAULT_SUPABASE_KEY2 = "sb_publishable_URRx_w0tQbtwdwciiajHaw_sYmM6Bfu";
 function getSupabaseUrl() {
-  return getEnv("SUPABASE_URL") || getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("VITE_SUPABASE_URL");
+  return getEnv("SUPABASE_URL") || getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("VITE_SUPABASE_URL") || DEFAULT_SUPABASE_URL2;
 }
 function getSupabaseKey() {
-  return getEnv("SUPABASE_SERVICE_ROLE_KEY") || getEnv("SUPABASE_ANON_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_PUBLISHABLE_KEY");
+  return getEnv("SUPABASE_SERVICE_ROLE_KEY") || getEnv("SUPABASE_ANON_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_ANON_KEY") || getEnv("VITE_SUPABASE_PUBLISHABLE_KEY") || DEFAULT_SUPABASE_KEY2;
 }
 var clientInstance = null;
 function isSupabaseConfigured() {
@@ -5338,6 +5349,7 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
     const normalizedEmail = email.trim().toLowerCase();
+    let authErr = null;
     const sb = getSupabase();
     if (sb) {
       try {
@@ -5381,7 +5393,7 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
             project: project || null
           });
         }
-        const authErr = getLastSupabaseAuthError();
+        authErr = getLastSupabaseAuthError();
         if (authErr?.isEmailNotConfirmed) {
           return res.status(400).json({
             error: authErr?.message || "Invalid credentials",
@@ -5394,7 +5406,7 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
     const db = readDB();
     const user = db.users ? db.users[normalizedEmail] : null;
     if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: authErr?.message || "Invalid credentials" });
     }
     let isMatch = false;
     if (user.passwordHash) {
@@ -5408,7 +5420,7 @@ app.post("/api/auth/login", loginLimiter, async (req, res) => {
       }
     }
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: authErr?.message || "Invalid credentials" });
     }
     const token = crypto.randomBytes(32).toString("hex");
     const sessionDuration = rememberMe ? 30 * 24 * 60 * 60 * 1e3 : 7 * 24 * 60 * 60 * 1e3;

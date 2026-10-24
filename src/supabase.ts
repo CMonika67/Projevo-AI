@@ -7,11 +7,15 @@ function getEnv(key: string): string {
   return '';
 }
 
+const DEFAULT_SUPABASE_URL = 'https://ubzlknzzxszlmakzlpki.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_URRx_w0tQbtwdwciiajHaw_sYmM6Bfu';
+
 function getSupabaseUrl(): string {
   return (
     getEnv('SUPABASE_URL') ||
     getEnv('NEXT_PUBLIC_SUPABASE_URL') ||
-    getEnv('VITE_SUPABASE_URL')
+    getEnv('VITE_SUPABASE_URL') ||
+    DEFAULT_SUPABASE_URL
   );
 }
 
@@ -22,7 +26,8 @@ function getSupabaseKey(): string {
     getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ||
     getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') ||
     getEnv('VITE_SUPABASE_ANON_KEY') ||
-    getEnv('VITE_SUPABASE_PUBLISHABLE_KEY')
+    getEnv('VITE_SUPABASE_PUBLISHABLE_KEY') ||
+    DEFAULT_SUPABASE_KEY
   );
 }
 

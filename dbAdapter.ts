@@ -83,13 +83,17 @@ export function getPgPool(): Pool | null {
  * Initialize Supabase Client if credentials are present.
  * Uses SUPABASE_SERVICE_ROLE_KEY (backend server-only) or SUPABASE_ANON_KEY.
  */
+const DEFAULT_SUPABASE_URL = 'https://ubzlknzzxszlmakzlpki.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'sb_publishable_URRx_w0tQbtwdwciiajHaw_sYmM6Bfu';
+
 export function getSupabase(): SupabaseClient | null {
   if (supabaseDisabledForTesting) return null;
   if (supabaseClient) return supabaseClient;
   const supabaseUrl =
     process.env.SUPABASE_URL ||
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL;
+    process.env.VITE_SUPABASE_URL ||
+    DEFAULT_SUPABASE_URL;
 
   const supabaseKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -97,7 +101,8 @@ export function getSupabase(): SupabaseClient | null {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.VITE_SUPABASE_ANON_KEY ||
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    DEFAULT_SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     return null;
@@ -526,6 +531,10 @@ export async function supabaseGetOAuthUrl(provider: 'google' = 'google', redirec
   const delimiter = targetUrl.includes('?') ? '&' : '?';
   const mockOAuthUrl = `${targetUrl}${delimiter}code=mock_google_oauth_success`;
 
+  if (supabaseDisabledForTesting) {
+    return { url: mockOAuthUrl };
+  }
+
   const sb = getSupabase();
   if (!sb) {
     return { url: mockOAuthUrl };
@@ -534,7 +543,11 @@ export async function supabaseGetOAuthUrl(provider: 'google' = 'google', redirec
     const { data, error } = await sb.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: targetUrl
+        redirectTo: targetUrl,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline'
+        }
       }
     });
     if (error) {

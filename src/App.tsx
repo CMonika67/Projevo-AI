@@ -152,6 +152,15 @@ export default function App() {
 
       if (urlErrorDesc) {
         const decodedError = decodeURIComponent(urlErrorDesc);
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: decodedError }, window.location.origin);
+            window.close();
+            return;
+          } catch (e) {
+            console.warn('Could not postMessage error to opener:', e);
+          }
+        }
         window.history.replaceState(null, '', `/login?error=${encodeURIComponent(decodedError)}`);
         setIsAuthenticated(false);
         setIsValidatingSession(false);
@@ -176,6 +185,15 @@ export default function App() {
 
           if (hashToken) {
             localStorage.setItem('token', hashToken);
+            if (window.opener && !window.opener.closed) {
+              try {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', token: hashToken }, window.location.origin);
+                window.close();
+                return;
+              } catch (e) {
+                console.warn('Could not postMessage to opener:', e);
+              }
+            }
             window.history.replaceState(null, '', window.location.pathname);
           }
         } catch (e) {
@@ -238,6 +256,21 @@ export default function App() {
           });
           if (data?.token) {
             localStorage.setItem('token', data.token);
+            if (window.opener && !window.opener.closed) {
+              try {
+                window.opener.postMessage({
+                  type: 'GOOGLE_AUTH_SUCCESS',
+                  token: data.token,
+                  profile: data.profile,
+                  project: data.project,
+                  email: data.email
+                }, window.location.origin);
+                window.close();
+                return;
+              } catch (e) {
+                console.warn('Could not postMessage to opener:', e);
+              }
+            }
             if (data.profile) setProfile(data.profile);
             if (data.project) setProject(data.project);
             setIsAuthenticated(true);
@@ -249,6 +282,15 @@ export default function App() {
         } catch (e: any) {
           console.error('Error exchanging authorization code:', e);
           const errMsg = e.message || 'Sign-in link or authorization code is invalid or expired.';
+          if (window.opener && !window.opener.closed) {
+            try {
+              window.opener.postMessage({ type: 'GOOGLE_AUTH_ERROR', error: errMsg }, window.location.origin);
+              window.close();
+              return;
+            } catch (postErr) {
+              console.warn('Could not postMessage error to opener:', postErr);
+            }
+          }
           window.history.replaceState(null, '', `/login?error=${encodeURIComponent(errMsg)}`);
           setIsAuthenticated(false);
           setIsValidatingSession(false);
