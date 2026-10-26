@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScreenType } from '../types';
 import { safeApiFetch } from '../api';
 import { isFirebaseConfigured, signInWithGoogle } from '../firebase';
@@ -54,6 +54,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const authHandledRef = useRef(false);
+  const popupCheckIntervalRef = useRef<any>(null);
+
   // OTP cooldown timer effect
   useEffect(() => {
     if (otpCooldown <= 0) return;
@@ -65,13 +68,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   // Listen for Google OAuth popup success and error messages
   useEffect(() => {
-    let authHandled = false;
-
     const handleAuthMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'GOOGLE_AUTH_SUCCESS' && event.data?.token) {
-        if (authHandled) return;
-        authHandled = true;
+        if (authHandledRef.current) return;
+        authHandledRef.current = true;
+        if (popupCheckIntervalRef.current) {
+          clearInterval(popupCheckIntervalRef.current);
+          popupCheckIntervalRef.current = null;
+        }
         localStorage.setItem('token', event.data.token);
         setIsGoogleLoading(false);
         onLoginSuccess(
@@ -81,6 +86,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
           event.data.token
         );
       } else if (event.data?.type === 'GOOGLE_AUTH_ERROR') {
+        if (popupCheckIntervalRef.current) {
+          clearInterval(popupCheckIntervalRef.current);
+          popupCheckIntervalRef.current = null;
+        }
         setIsGoogleLoading(false);
         setError(event.data.error || 'Google authentication failed.');
       }
@@ -88,8 +97,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
     const handleStorageEvent = (event: StorageEvent) => {
       if (event.key === 'token' && event.newValue) {
-        if (authHandled) return;
-        authHandled = true;
+        if (authHandledRef.current) return;
+        authHandledRef.current = true;
+        if (popupCheckIntervalRef.current) {
+          clearInterval(popupCheckIntervalRef.current);
+          popupCheckIntervalRef.current = null;
+        }
         setIsGoogleLoading(false);
         onLoginSuccess('', undefined, undefined, event.newValue);
       }
@@ -100,6 +113,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
     return () => {
       window.removeEventListener('message', handleAuthMessage);
       window.removeEventListener('storage', handleStorageEvent);
+      if (popupCheckIntervalRef.current) {
+        clearInterval(popupCheckIntervalRef.current);
+      }
     };
   }, [onLoginSuccess]);
 
@@ -254,17 +270,28 @@ export const LoginView: React.FC<LoginViewProps> = ({
           `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
         );
 
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        if (!popup) {
           // If popup is blocked by the browser, fallback smoothly to full page redirect
           window.location.href = oauthUrl;
           return;
         }
 
+        authHandledRef.current = false;
+        if (popupCheckIntervalRef.current) {
+          clearInterval(popupCheckIntervalRef.current);
+        }
         popup.focus();
-        const checkClosed = setInterval(() => {
-          if (!popup || popup.closed) {
-            clearInterval(checkClosed);
-            setIsGoogleLoading(false);
+        popupCheckIntervalRef.current = setInterval(() => {
+          try {
+            if (!popup || popup.closed) {
+              if (popupCheckIntervalRef.current) {
+                clearInterval(popupCheckIntervalRef.current);
+                popupCheckIntervalRef.current = null;
+              }
+              setIsGoogleLoading(false);
+            }
+          } catch {
+            // Ignore cross-origin access restrictions during poll
           }
         }, 800);
       } else {

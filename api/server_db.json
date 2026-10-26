@@ -297,7 +297,7 @@
       "email": "monikacherukuri667@gmail.com",
       "passwordHash": "$2b$10$9ySA1tLXBGTnWagT1IEJkO8Y/wuqym9CUslUQrlZj4UXJ0n1CYmUm",
       "profile": {
-        "name": "C Monika",
+        "name": "Monika",
         "role": "Engineering Student",
         "membership": "Projevo AI Member",
         "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
@@ -307,7 +307,7 @@
         "skills": [
           {
             "name": "JavaScript",
-            "level": 70,
+            "level": 90,
             "status": "have"
           },
           {
@@ -353,7 +353,8 @@
         ],
         "selectedInterests": [
           "Artificial Intelligence & Machine Learning",
-          "Cloud"
+          "Cloud",
+          "Full-Stack Web Development"
         ],
         "interestedRoles": [
           "FullStackEngineer",
@@ -369,105 +370,50 @@
         "onboardingGoals": "Prepare for technical interviews and build production-grade portfolio projects"
       },
       "project": {
-        "id": "ai-housing-price-predictor",
-        "title": "Real Estate Price Valuation & Feature Importance Engine",
-        "tagline": "Tabular regression model predicting metropolitan housing prices based on urban features, schools, and transit proximity.",
-        "domain": "Artificial Intelligence and Machine Learning",
-        "difficulty": "Beginner",
-        "problemStatement": "Homebuyers and realtors struggle with transparent pricing models that explain which neighborhood factors drive property premiums.",
-        "proposedSolution": "Build an end-to-end scikit-learn regression pipeline with SHAP interpretability values and a Streamlit UI for instant valuation quotes.",
-        "expectedOutcome": "Trained model achieving R^2 > 0.88 with clear feature importance plots explaining property appreciation.",
+        "id": "iot-predictive-equipment-maintenance",
+        "title": "IoT Industrial Predictive Maintenance Engine",
+        "tagline": "Vibration and acoustic sensor anomaly detection pipeline predicting CNC machinery bearing failures.",
+        "domain": "Internet of Things and Embedded Systems",
+        "difficulty": "Intermediate",
+        "problemStatement": "Unplanned factory downtime causes millions in industrial losses from unmonitored mechanical wear.",
+        "proposedSolution": "Deploy an MQTT broker ingesting edge sensor telemetry, running an LSTM autoencoder to detect subtle degradation signatures before physical failure.",
+        "expectedOutcome": "Real-time telemetry dashboard with 72-hour predictive failure warnings and automated technician alert webhooks.",
         "possibleExtensions": [
-          "Geographic map heatmap overlays",
-          "Zillow API real-time price comparison",
-          "Mortgage rate interest sensitivity curve"
+          "Edge deployment on Raspberry Pi",
+          "Acoustic FFT spectral analysis",
+          "Automated spare-part order triggers"
         ],
-        "feasibility": "High: Uses established Kaggle housing datasets and standard scikit-learn regression modules.",
-        "whyRelevant": "Applies your confirmed skills in Python to real-world Artificial Intelligence and Machine Learning engineering problems.",
+        "feasibility": "Medium-High: Requires time-series sensor data streams or NASA turbofan dataset.",
+        "whyRelevant": "Applies your confirmed skills in Python to real-world Internet of Things and Embedded Systems engineering problems.",
         "status": "In Progress",
-        "matchScore": 54,
-        "healthScore": 91,
+        "matchScore": 53,
+        "healthScore": 87,
         "readinessScore": 45,
         "stage": "Requirements & Architecture",
         "stageProgress": 25,
         "techStack": [
           "Python",
-          "Scikit-Learn",
-          "Pandas",
-          "Streamlit",
-          "Matplotlib"
+          "MQTT",
+          "TensorFlow",
+          "InfluxDB",
+          "Grafana",
+          "Docker"
         ],
-        "issuesCount": 0,
-        "healthReport": {
-          "overallHealth": 91,
-          "categories": [
-            {
-              "name": "Code Quality",
-              "score": 94,
-              "status": "good",
-              "icon": "code",
-              "analysisStatus": "scored",
-              "weight": 25,
-              "note": "Clean code structure; no syntax or silenced exception defects found.",
-              "reason": "Standard static code maintainability and error-handling audit."
-            },
-            {
-              "name": "Security",
-              "score": 95,
-              "status": "good",
-              "icon": "security",
-              "analysisStatus": "scored",
-              "weight": 35,
-              "note": "No critical security defects detected by static rules (AST & pattern scan).",
-              "reason": "Static check of execution patterns, secrets, and injection vectors."
-            },
-            {
-              "name": "Brute-Force",
-              "score": -1,
-              "status": "good",
-              "icon": "gpp_bad",
-              "analysisStatus": "na",
-              "weight": 0,
-              "note": "Not Applicable: No authentication routes or credential handling in this file.",
-              "reason": "No authentication endpoints, login forms, or credential verification pathways found in file."
-            },
-            {
-              "name": "Accessibility",
-              "score": -1,
-              "status": "good",
-              "icon": "accessibility_new",
-              "analysisStatus": "na",
-              "weight": 0,
-              "note": "Not Applicable: Command-line or non-UI code has no frontend presentation layer.",
-              "reason": "Standalone script has no HTML, UI components, or frontend presentation layer."
-            },
-            {
-              "name": "Performance",
-              "score": 82,
-              "status": "good",
-              "icon": "speed",
-              "analysisStatus": "scored",
-              "weight": 20,
-              "note": "Potential complexity bottlenecks or unpruned loops detected.",
-              "reason": "Static complexity and resource utilization heuristics."
-            },
-            {
-              "name": "Google Services",
-              "score": -1,
-              "status": "good",
-              "icon": "cloud_done",
-              "analysisStatus": "na",
-              "weight": 0,
-              "note": "Not Applicable: No Google Cloud or Gemini services imported.",
-              "reason": "Standalone code does not integrate Google Cloud or Gemini SDK."
-            }
-          ],
-          "criticalIssues": [],
-          "analyzedAt": "2026-10-20T19:00:26.392Z"
-        }
+        "issuesCount": 0
       },
       "latestAnalysis": {
-        "overallHealth": 91,
+        "overallHealth": 87,
+        "healthScore": 87,
+        "statusText": "Healthy with improvements needed",
+        "summary": "Static analysis scanned 1 file(s) (Sudooku.py). Evaluated across 3 applicable categories: Code Quality (94), Security (95), Performance (66). Excluded 3 inapplicable category/ies (Brute-Force, Accessibility, Google Services). Identified 0 actionable finding(s).",
+        "scoringMethodology": "Weighted average of applicable categories: Code Quality (weight 25%), Security (weight 35%), Performance (weight 20%). Denominator excludes 3 N/A categories.",
+        "applicableCategoriesCount": 3,
+        "naCategoriesCount": 3,
+        "checksPerformed": [
+          "Python AST pattern analysis (exec/eval, shell command execution, secrets)",
+          "Exception handling & reliability inspection",
+          "Import hygiene & namespace clarity"
+        ],
         "categories": [
           {
             "name": "Code Quality",
@@ -511,8 +457,8 @@
           },
           {
             "name": "Performance",
-            "score": 82,
-            "status": "good",
+            "score": 66,
+            "status": "needs-attention",
             "icon": "speed",
             "analysisStatus": "scored",
             "weight": 20,
@@ -531,9 +477,239 @@
           }
         ],
         "criticalIssues": [],
-        "analyzedAt": "2026-10-20T19:00:26.392Z"
+        "inferredProject": {
+          "title": "Sudooku",
+          "description": "Inferred from 1 uploaded source file(s) across stack [Python].",
+          "techStack": [
+            "Python"
+          ],
+          "confidence": "medium",
+          "architecture": "Script / Service Architecture",
+          "missingFiles": [
+            "requirements.txt or pyproject.toml (Python dependencies)",
+            "README.md (Documentation for setup, architecture, and usage)",
+            "Automated tests (e.g., unit or integration test suite)"
+          ],
+          "buildConcerns": [],
+          "totalFilesScanned": 1
+        }
       },
-      "interviewPools": {},
+      "interviewPools": {
+        "i want ott learn to learn machine learning": [
+          {
+            "id": "q-1",
+            "category": "Architecture & Design Decisions",
+            "difficulty": "Easy",
+            "question": "Can you explain why you chose a classification approach for your machine learning project rather than regression?",
+            "whyAsked": "Evaluates fundamental understanding of problem framing and core ML paradigms suitable for an AI Engineer.",
+            "keyPoints": [
+              "Distinction between predicting categories (classification) versus continuous values (regression).",
+              "Alignment of classification with the specific project requirements.",
+              "Clear identification of the target variable type."
+            ],
+            "exampleAnswer": "I chose a classification approach because the goal of the project was to categorize data points into discrete classes rather than predict a continuous numerical value. This fits standard supervised learning tasks where output labels are categorical.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-2",
+            "category": "Technology Stack & Alternatives",
+            "difficulty": "Easy",
+            "question": "What specific machine learning libraries or frameworks did you use in your stack, and why did you select them?",
+            "whyAsked": "Assesses familiarity with standard ML tooling and the rationale behind technology choices.",
+            "keyPoints": [
+              "Mention of standard libraries like Scikit-Learn, TensorFlow, or PyTorch.",
+              "Justification based on ease of use, community support, or suitability for classification.",
+              "Awareness of alternative frameworks."
+            ],
+            "exampleAnswer": "I used Python with Scikit-Learn for the machine learning pipeline. Scikit-Learn provides robust, easy-to-use implementations of standard classification algorithms and data preprocessing utilities, making it ideal for learning and rapid prototyping.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-3",
+            "category": "Personal Role & Contribution",
+            "difficulty": "Easy",
+            "question": "As a learner taking on this machine learning project, what was the most challenging concept you had to grasp personally?",
+            "whyAsked": "Gauges self-awareness, learning agility, and honesty regarding current skill levels for an AI Engineer role.",
+            "keyPoints": [
+              "Identification of a specific ML concept (e.g., overfitting, feature scaling, model evaluation).",
+              "Steps taken to overcome the learning curve.",
+              "Application of the concept to the project."
+            ],
+            "exampleAnswer": "The most challenging concept for me was understanding how to properly split data into training and testing sets to avoid data leakage. I overcame this by studying cross-validation techniques and applying them directly to my classification model.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-4",
+            "category": "Implementation Details & Algorithms",
+            "difficulty": "Easy",
+            "question": "Which specific classification algorithm did you implement, and in basic terms, how does it make a decision?",
+            "whyAsked": "Tests fundamental algorithmic knowledge and the ability to explain core ML mechanics simply.",
+            "keyPoints": [
+              "Name of the algorithm (e.g., Logistic Regression, Decision Tree).",
+              "High-level explanation of how the algorithm learns patterns from features.",
+              "Description of the inference or prediction step."
+            ],
+            "exampleAnswer": "I implemented Logistic Regression. It works by calculating the probability that a given input data point belongs to a particular class using a sigmoid function, and then applies a threshold to assign the final categorical label.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-5",
+            "category": "Debugging & Real-World Edge Cases",
+            "difficulty": "Easy",
+            "question": "How did you evaluate the performance of your classification model, and what metric did you rely on?",
+            "whyAsked": "Determines whether the candidate understands basic model evaluation beyond simple accuracy.",
+            "keyPoints": [
+              "Mention of accuracy, precision, recall, or F1-score.",
+              "Understanding of why accuracy can be misleading with imbalanced data.",
+              "Use of a confusion matrix."
+            ],
+            "exampleAnswer": "I used accuracy as a baseline metric, but I also looked at a confusion matrix along with precision and recall to ensure the model wasn't just predicting the majority class in case of any class imbalance.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-6",
+            "category": "Scalability, Concurrency & Security",
+            "difficulty": "Easy",
+            "question": "If your dataset grew significantly larger, what is one basic adjustment you would need to make to your data processing or training approach?",
+            "whyAsked": "Introduces foundational concepts of data scaling and resource management relevant to AI engineering.",
+            "keyPoints": [
+              "Recognition of memory or compute bottlenecks with large datasets.",
+              "Mention of batching, feature selection, or using more scalable algorithms.",
+              "Understanding of data preprocessing scalability."
+            ],
+            "exampleAnswer": "If the dataset became much larger, loading all data into memory at once would cause issues. I would need to implement batch processing or data generators to feed the model in smaller chunks during training.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-google-sourced-01",
+            "category": "Scalability & Fault Tolerance",
+            "difficulty": "Hard",
+            "isSourced": true,
+            "sourceCompany": "Google Public SRE & Distributed Systems Interview Archive",
+            "question": "In a high-throughput distributed system like i want ott learn to learn machine learning, how do you implement graceful degradation and backpressure to protect downstream dependencies when tail latencies spike?",
+            "whyAsked": "Standard Google engineering interview evaluation for handling cascading failures and preserving system availability under adverse conditions.",
+            "keyPoints": [
+              "Differentiate between hard failure and soft degradation (circuit breakers)",
+              "Explain token bucket or adaptive concurrency limiting algorithms",
+              "Discuss asynchronous message buffering and load shedding policies"
+            ],
+            "exampleAnswer": "In i want ott learn to learn machine learning, when downstream components experience contention, we introduce circuit-breaker patterns with exponential backoff and jitter, shedding non-essential background telemetry to preserve critical path availability."
+          }
+        ],
+        "IoT Industrial Predictive Maintenance Engine": [
+          {
+            "id": "q-1",
+            "category": "Architecture & Design Decisions",
+            "difficulty": "Medium",
+            "question": "How did you design the data flow from the MQTT broker ingest layer down to InfluxDB, and what were the decoupling trade-offs when integrating the LSTM autoencoder pipeline?",
+            "whyAsked": "Evaluates understanding of event-driven architectures, time-series data storage patterns, and decoupling heavy ML inference from real-time ingestion paths.",
+            "keyPoints": [
+              "Use of a message queue or pub/sub buffer between MQTT and storage/inference",
+              "Handling backpressure when the LSTM inference is slower than sensor ingestion rates",
+              "Separation of hot-path telemetry storage from batch or near-real-time anomaly scoring"
+            ],
+            "exampleAnswer": "Sensors publish telemetry to the MQTT broker, which an ingestion service subscribes to. We push raw payloads into InfluxDB for immediate visualization in Grafana while simultaneously feeding a sliding-window buffer for the LSTM autoencoder. To prevent pipeline blocks, inference runs asynchronously, writing anomaly scores back as a separate metric stream.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-2",
+            "category": "Technology Stack & Alternatives",
+            "difficulty": "Medium",
+            "question": "Why did you choose InfluxDB over a traditional relational database or a general-purpose NoSQL store for industrial telemetry, and what are its limitations at scale?",
+            "whyAsked": "Tests knowledge of specialized storage engines for high-frequency time-series data and awareness of database trade-offs.",
+            "keyPoints": [
+              "Optimizations for append-heavy workloads and high-frequency writes",
+              "Built-in downsampling, retention policies, and time-window queries",
+              "High cardinality limitations and memory consumption profiles under heavy tag mutations"
+            ],
+            "exampleAnswer": "Relational databases struggle with the constant high-volume write throughput of IoT sensors, and NoSQL stores lack optimized time-window aggregation functions. InfluxDB natively handles time-series compression and downsampling. However, we had to carefully manage tag cardinality to prevent memory bloat.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-3",
+            "category": "Personal Role & Contribution",
+            "difficulty": "Medium",
+            "question": "As the lead for backend API design and error handling, how did you handle partial network failures or dropped MQTT packets between edge sensors and your backend services?",
+            "whyAsked": "Probes practical experience in building resilient distributed systems and robust API/service error handling under unstable industrial network conditions.",
+            "keyPoints": [
+              "MQTT QoS (Quality of Service) levels utilized (e.g., QoS 1)",
+              "Idempotency design in ingestion APIs to handle duplicated telemetry packets",
+              "Graceful degradation and local buffering strategies on the edge"
+            ],
+            "exampleAnswer": "I implemented MQTT QoS level 1 to ensure at-least-once delivery. On the backend ingestion APIs, I enforced idempotency by using composite keys of device ID and high-resolution timestamps, preventing duplicate records when network reconnections triggered retransmissions.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-4",
+            "category": "Implementation Details & Algorithms",
+            "difficulty": "Medium",
+            "question": "How does an LSTM autoencoder detect degradation signatures, and how did you determine the reconstruction error threshold for triggering maintenance alerts without causing alert fatigue?",
+            "whyAsked": "Assesses technical depth beyond basic API wiring, connecting machine learning mechanics with practical backend thresholding and alerting.",
+            "keyPoints": [
+              "Mechanism of encoder-compression and decoder-reconstruction on healthy time-series patterns",
+              "Usage of Mean Squared Error (MSE) on reconstruction as the anomaly score",
+              "Statistical threshold tuning based on validation data to balance false positives and false negatives"
+            ],
+            "exampleAnswer": "The LSTM autoencoder is trained exclusively on normal operational telemetry, learning to compress and reconstruct normal temporal sequences. When mechanical wear occurs, the reconstruction error (MSE) spikes. We established dynamic thresholds using rolling statistical deviations of validation data to minimize false positives.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-5",
+            "category": "Debugging & Real-World Edge Cases",
+            "difficulty": "Medium",
+            "question": "Walk me through how you debugged a memory leak or performance bottleneck in your Python pipeline when processing high-frequency sensor streams.",
+            "whyAsked": "Evaluates debugging methodology, profiling skills, and familiarity with Python's runtime limitations (like the GIL and memory management) in data-heavy loops.",
+            "keyPoints": [
+              "Use of profiling tools like cProfile, memory_profiler, or tracemalloc",
+              "Identifying unbounded buffer growth or uncollected circular references in streaming loops",
+              "Optimization techniques such as generator expressions and efficient NumPy array slicing"
+            ],
+            "exampleAnswer": "We noticed creeping memory usage in the ingestion worker. I used `tracemalloc` and realized our sliding-window buffers for the LSTM input were retaining unreferenced objects due to improper list slicing. I refactored the windowing logic to use pre-allocated NumPy arrays with fixed circular buffers, stabilizing memory consumption.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-6",
+            "category": "Scalability, Concurrency & Security",
+            "difficulty": "Medium",
+            "question": "If the factory scales from hundreds to tens of thousands of concurrent sensors, how would you scale your Dockerized Python backend services and MQTT broker architecture?",
+            "whyAsked": "Tests horizontal scaling strategies, container orchestration, and handling high concurrent connection limits in distributed environments.",
+            "keyPoints": [
+              "Horizontal scaling of stateless ingestion workers behind a load balancer",
+              "Clustering the MQTT broker (e.g., EMQX or VerneMQ) for high availability and load distribution",
+              "Container resource limits, connection pooling, and database sharding considerations"
+            ],
+            "exampleAnswer": "To scale, we would deploy a clustered MQTT broker setup to handle tens of thousands of persistent TCP connections. The Python ingestion and inference workers would be containerized and orchestrated via Kubernetes, using horizontal pod autoscalers tied to CPU utilization and queue lag metrics, alongside connection pooling for InfluxDB.",
+            "isSourced": false,
+            "sourceCompany": "Generated Practice Question"
+          },
+          {
+            "id": "q-google-sourced-01",
+            "category": "Scalability & Fault Tolerance",
+            "difficulty": "Hard",
+            "isSourced": true,
+            "sourceCompany": "Google Public SRE & Distributed Systems Interview Archive",
+            "question": "In a high-throughput distributed system like IoT Industrial Predictive Maintenance Engine, how do you implement graceful degradation and backpressure to protect downstream dependencies when tail latencies spike?",
+            "whyAsked": "Standard Google engineering interview evaluation for handling cascading failures and preserving system availability under adverse conditions.",
+            "keyPoints": [
+              "Differentiate between hard failure and soft degradation (circuit breakers)",
+              "Explain token bucket or adaptive concurrency limiting algorithms",
+              "Discuss asynchronous message buffering and load shedding policies"
+            ],
+            "exampleAnswer": "In IoT Industrial Predictive Maintenance Engine, when downstream components experience contention, we introduce circuit-breaker patterns with exponential backoff and jitter, shedding non-essential background telemetry to preserve critical path availability."
+          }
+        ]
+      },
       "learningProgress": {},
       "interviewPractice": {},
       "createdAt": "2026-10-20T15:26:24.576Z",
@@ -865,6 +1041,159 @@
             "Phase 4: Capstone Defense"
           ],
           "analyzedAt": "2026-10-20T19:02:59.239Z"
+        },
+        {
+          "title": "Edge-Computed Acoustic Assistive System for Lecture Halls",
+          "tagline": "Real-time audio classification and captioning pipeline deployed at the edge to support hearing-impaired students.",
+          "domain": "AI / ML",
+          "problemStatement": "Hearing-impaired students in large lecture halls miss critical non-verbal audio cues (e.g., laughter, alarms, applause, projector hum) and experience high latency in speech-to-text transcription.",
+          "targetUsers": "Hearing-impaired college students and accessibility coordinators",
+          "proposedSolution": "A lightweight web client utilizing the Web Audio API to stream audio to an edge-hosted FastAPI backend running a quantized audio classification model (YAMNet/Audio Spectrogram Transformer).",
+          "keyFeatures": [
+            "Real-time environmental audio event classification",
+            "Low-latency edge processing via FastAPI and Python ML runtimes",
+            "Browser-based visual alert dashboard via Web Audio API",
+            "Configurable alert thresholds and sound categories"
+          ],
+          "feasibility": "High",
+          "feasibilityRationale": "Pre-trained lightweight audio models (like YAMNet) easily run on modest hardware and within browser or local edge environments, keeping latency minimal and fulfilling project constraints.",
+          "assumptions": [
+            "Users have access to a stable local Wi-Fi network or direct edge server connection in lecture halls.",
+            "Lecture halls permit localized audio capturing for accessibility purposes."
+          ],
+          "limitations": [
+            "Background noise in large lecture halls may degrade classification accuracy.",
+            "Edge hardware constraints limit model size and complex deep learning inference speeds."
+          ],
+          "recommendedTechnologies": [
+            {
+              "tech": "Python",
+              "role": "ML",
+              "justification": "Industry standard for audio processing libraries and machine learning model inference."
+            },
+            {
+              "tech": "FastAPI",
+              "role": "Backend",
+              "justification": "High-performance asynchronous framework ideal for handling real-time audio streams."
+            },
+            {
+              "tech": "Web Audio API",
+              "role": "Frontend",
+              "justification": "Native browser API for high-performance audio capture and manipulation."
+            },
+            {
+              "tech": "YAMNet",
+              "role": "ML",
+              "justification": "Pre-trained deep learning model capable of classifying 521 audio events efficiently."
+            }
+          ],
+          "suggestedArchitecture": "Client-side Web Audio API captures microphone input streams, chunks audio buffers, and transmits payloads via WebSockets to a FastAPI edge server. The server processes the audio through a quantized inference engine and emits classified event labels back to the client dashboard.",
+          "components": [
+            {
+              "name": "Audio Capture Client",
+              "purpose": "Captures microphone input and handles real-time visual UI alerts."
+            },
+            {
+              "name": "FastAPI Ingestion Server",
+              "purpose": "Receives audio streams and manages concurrent client connections."
+            },
+            {
+              "name": "Inference Engine",
+              "purpose": "Runs pre-trained audio classification models on incoming audio frames."
+            }
+          ],
+          "requiredSkills": [
+            "Python asynchronous programming",
+            "Machine learning inference optimization",
+            "WebSockets and Web Audio API utilization"
+          ],
+          "prerequisites": [
+            "Basic understanding of digital signal processing (DSP) and spectrograms",
+            "Familiarity with RESTful APIs and WebSockets"
+          ],
+          "dataSourcesAndIntegrations": [
+            "AudioSet ontology for pre-trained sound event categories"
+          ],
+          "roadmap": [
+            {
+              "phase": "Phase 1: Architecture & Scaffolding",
+              "title": "Project Setup and Pipeline Design",
+              "duration": "1 week",
+              "deliverables": [
+                "FastAPI skeleton",
+                "Web Audio API client stub"
+              ]
+            },
+            {
+              "phase": "Phase 2: Core Implementation",
+              "title": "Model Integration and Streaming",
+              "duration": "2 weeks",
+              "deliverables": [
+                "Working YAMNet integration",
+                "WebSocket audio streaming loop"
+              ]
+            },
+            {
+              "phase": "Phase 3: Hardening & Testing",
+              "title": "Latency Optimization and UI",
+              "duration": "1 week",
+              "deliverables": [
+                "Responsive accessibility dashboard",
+                "Performance benchmarking report"
+              ]
+            },
+            {
+              "phase": "Phase 4: Capstone Defense",
+              "title": "Documentation and Final Polish",
+              "duration": "1 week",
+              "deliverables": [
+                "Final presentation",
+                "Deployment guide"
+              ]
+            }
+          ],
+          "testingStrategy": "Unit testing for backend endpoints using Pytest, integration testing for WebSocket stream stability, and manual validation against simulated lecture hall audio samples.",
+          "securityAndPrivacy": "Data is processed ephemeral-style at the edge without persistent storage of raw audio recordings to ensure privacy compliance.",
+          "risksAndMitigations": [
+            {
+              "risk": "High network latency over campus Wi-Fi",
+              "impact": "Medium",
+              "mitigation": "Optimize audio payload chunk sizes and utilize WebSockets for persistent connections."
+            },
+            {
+              "risk": "Low classification accuracy due to echo and ambient noise",
+              "impact": "High",
+              "mitigation": "Implement basic noise-gate filtering in the Web Audio API client layer."
+            }
+          ],
+          "expectedDeliverables": [
+            "Source code repository with containerized deployment scripts",
+            "Functional web client dashboard",
+            "Comprehensive technical report and capstoned defense slides"
+          ],
+          "evaluationCriteria": [
+            "Classification latency under 200ms",
+            "Model inference accuracy on target lecture sounds > 85%"
+          ],
+          "suggestedNextSteps": [
+            "Initialize Git repository and define FastAPI project structure",
+            "Test raw audio capture in browser using Web Audio API"
+          ],
+          "techStack": [
+            "Python",
+            "FastAPI",
+            "Web Audio API",
+            "TensorFlow/PyTorch"
+          ],
+          "matchScore": 88,
+          "estimatedWeeks": 5,
+          "milestones": [
+            "Phase 1: Architecture & Scaffolding",
+            "Phase 2: Core Implementation",
+            "Phase 3: Hardening & Testing",
+            "Phase 4: Capstone Defense"
+          ],
+          "analyzedAt": "2026-10-26T09:41:37.034Z"
         }
       ]
     },
@@ -1009,7 +1338,7 @@
       "email": "babysweety762@gmail.com",
       "passwordHash": "$2b$10$wWr.FG0y1yVb2gNrNNUGK.Trl.qdY2j.iPkZH1qCPqBicd/TrjvFi",
       "profile": {
-        "name": "Monika  C",
+        "name": "baby",
         "role": "Engineering Student",
         "membership": "Projevo AI Member",
         "avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuB9pv-nFwxur8rUnH6ZakJgcjkCNV5OmhDBMXMcdJZHr_uUsblghved72UHuLcjhRWCnnNtfKNZMJAQBYVbNk15QL_0lQTYEZHhdp1VpbSUD6Ur3w6XIf6GYDy0YZsl3q2_0E1v79jDrGTRcv9-t2m_KC5LvmCHLjhtkXegKu8bggsDqsDQ8fXXSuMyk8HblrXa_5vF1zcKE8-aYGkFYBP7i1Tjc9iRhmPNYboeYHywYhH0LO5lXzoJ",
@@ -1757,6 +2086,12 @@
       "email": "monikacherukuri667@gmail.com",
       "createdAt": 1792823035953,
       "expiresAt": 1793427835953
+    },
+    "eyJhbGciOiJFUzI1NiIsImtpZCI6IjAzMmMwOTEyLWQzZGEtNGFlOS04MDhkLWEzYTQ0ZjdhYjNmZCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3Viemxrbnp6eHN6bG1ha3pscGtpLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIwZTFlNTI3OS1hZTU4LTRlY2MtYjRlMC02MmYwOTMzOWNmMjQiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzkzMDI4MjI5LCJpYXQiOjE3OTMwMjQ2MjksImVtYWlsIjoiYmFieXN3ZWV0eTc2MkBnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6Imdvb2dsZSIsInByb3ZpZGVycyI6WyJnb29nbGUiXX0sInVzZXJfbWV0YWRhdGEiOnsiYXZhdGFyX3VybCI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0x6N3NObkZvcUREdzVfOURQWGI2azRPZ1RRYTBoVzJua2RXTHo3Ujk1RFNMTVhydz1zOTYtYyIsImVtYWlsIjoiYmFieXN3ZWV0eTc2MkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZnVsbF9uYW1lIjoiQmFieSBTd2VldHkiLCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYW1lIjoiQmFieSBTd2VldHkiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMejdzTm5Gb3FERHc1XzlEUFhiNms0T2dUUWEwaFcybmtkV0x6N1I5NURTTE1Ycnc9czk2LWMiLCJwcm92aWRlcl9pZCI6IjEwMjA2Nzg2NjE3MTYzNzQ2NjUyMSIsInN1YiI6IjEwMjA2Nzg2NjE3MTYzNzQ2NjUyMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6Im9hdXRoIiwidGltZXN0YW1wIjoxNzkzMDI0NjI5fV0sInNlc3Npb25faWQiOiJhZTJjMDY5ZC1mOTM2LTQ1MjktYmI2OS0zNjMwMzM1NWNhMGQiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.QhwjS8vhpM3TFbQnpXHMD70btupiY_iHtG92s9lNUj6dDcqdzoMfcOaJUHNMfgajTnJqA-5TJUGjOfv3mHW4kg": {
+      "userId": "0e1e5279-ae58-4ecc-b4e0-62f09339cf24",
+      "email": "babysweety762@gmail.com",
+      "createdAt": 1793024629119,
+      "expiresAt": 1795616629119
     }
   },
   "passwordResetCodes": {

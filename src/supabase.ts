@@ -57,7 +57,7 @@ export function getSupabase(): SupabaseClient | null {
       auth: {
         persistSession: isBrowser,
         autoRefreshToken: isBrowser,
-        detectSessionInUrl: isBrowser,
+        detectSessionInUrl: false,
         flowType: 'pkce'
       }
     });

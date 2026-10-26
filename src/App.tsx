@@ -73,6 +73,9 @@ function getPathForScreen(screen: ScreenType): string {
   }
 }
 
+let inFlightExchangeCode: string | null = null;
+let completedExchangeCode: string | null = null;
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isValidatingSession, setIsValidatingSession] = useState<boolean>(true);
@@ -274,6 +277,11 @@ export default function App() {
       // 5. Process Supabase PKCE / OAuth authorization code (?code=...)
       const authCode = searchParams.get('code');
       if (authCode) {
+        if (completedExchangeCode === authCode || inFlightExchangeCode === authCode) {
+          return;
+        }
+        inFlightExchangeCode = authCode;
+
         try {
           let authToken: string | null = null;
           let authEmail: string = '';
@@ -282,17 +290,20 @@ export default function App() {
           const sb = getSupabase();
           if (sb) {
             try {
-              // 1. Check if session was already established/detected by Supabase client
-              const { data: sessionData } = await sb.auth.getSession();
-              if (sessionData?.session?.access_token) {
-                authToken = sessionData.session.access_token;
-                authEmail = sessionData.session.user?.email || '';
+              // 1. Exchange code explicitly using browser's stored PKCE verifier
+              const { data: exchangeData, error: exchangeErr } = await sb.auth.exchangeCodeForSession(authCode);
+              if (!exchangeErr && exchangeData?.session?.access_token) {
+                authToken = exchangeData.session.access_token;
+                authEmail = exchangeData.session.user?.email || '';
               } else {
-                // 2. Otherwise exchange code explicitly using browser's stored PKCE verifier
-                const { data: exchangeData, error: exchangeErr } = await sb.auth.exchangeCodeForSession(authCode);
-                if (!exchangeErr && exchangeData?.session?.access_token) {
-                  authToken = exchangeData.session.access_token;
-                  authEmail = exchangeData.session.user?.email || '';
+                if (exchangeErr) {
+                  console.warn('exchangeCodeForSession notice:', exchangeErr.message);
+                }
+                // 2. Fallback check in case session was established in cache
+                const { data: sessionData } = await sb.auth.getSession();
+                if (sessionData?.session?.access_token) {
+                  authToken = sessionData.session.access_token;
+                  authEmail = sessionData.session.user?.email || '';
                 }
               }
             } catch (clientExErr) {
@@ -309,6 +320,8 @@ export default function App() {
           });
 
           if (data?.token) {
+            completedExchangeCode = authCode;
+            inFlightExchangeCode = null;
             localStorage.setItem('token', data.token);
             if (window.opener && !window.opener.closed) {
               try {
@@ -332,8 +345,14 @@ export default function App() {
             setCurrentScreen('dashboard');
             setIsValidatingSession(false);
             return;
+          } else {
+            throw new Error('No session token returned from authentication callback');
           }
         } catch (e: any) {
+          inFlightExchangeCode = null;
+          if (completedExchangeCode === authCode) {
+            return;
+          }
           console.error('Error exchanging authorization code:', e);
           const errMsg = e.message || 'Sign-in link or authorization code is invalid or expired.';
           if (window.opener && !window.opener.closed) {

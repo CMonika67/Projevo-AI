@@ -1913,7 +1913,7 @@ function getSupabase2() {
       auth: {
         persistSession: isBrowser,
         autoRefreshToken: isBrowser,
-        detectSessionInUrl: isBrowser,
+        detectSessionInUrl: false,
         flowType: "pkce"
       }
     });
